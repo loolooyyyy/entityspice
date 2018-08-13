@@ -1,0 +1,398 @@
+<?php
+
+const _ENTITYSPICE_HAS_INLINE_ENTITY_FORM = 'has_inline_entity_form';
+
+const _ENTITYSPICE_HAS_REVISION = 'has_revision';
+const _ENTITYSPICE_HAS_BUNDLE = 'has_bundle';
+const _ENTITYSPICE_HAS_UID = 'has_uid';
+const _ENTITYSPICE_HAS_CREATED = 'has_created';
+const _ENTITYSPICE_HAS_UPDATED = 'has_updated';
+const _ENTITYSPICE_HAS_TITLE = 'has_title';
+
+const _ENTITYSPICE_KEY_REVISION = 'key_revision';
+const _ENTITYSPICE_KEY_BUNDLE = 'key_bundle';
+const _ENTITYSPICE_KEY_UID = 'key_uid';
+const _ENTITYSPICE_KEY_CREATED = 'key_created';
+const _ENTITYSPICE_KEY_UPDATED = 'key_updated';
+const _ENTITYSPICE_KEY_TITLE = 'key_title';
+
+
+const ENTITYSPICE_DEVELOPMENT = TRUE;
+const ENTITYSPICE_DANGEROUS_DEBUG = TRUE;
+
+if (ENTITYSPICE_DEVELOPMENT) {
+  require_once 'inc/dev_datahandler.class.inc';
+}
+
+require_once 'inc/_require.inc';
+
+/**
+ * Thrown when some operation is not supported by an entity type.
+ *
+ * e.g get title (as not all entity types might have a title).
+ */
+class EntitySpiceOperationNotSupported extends Exception {
+
+}
+
+// ___________________________________________________________________ METADATA
+
+/**
+ * Get hook_entityspice_info of an specific entity type.
+ *
+ * @param string $etype
+ *
+ * @return mixed all metadata of an entity type.
+ * @throws \Exception
+ */
+function _entityspice_get_info($etype) {
+  if (empty($etype)) {
+    throw new Exception("entity type not specified");
+  }
+
+  $info = _entityspice_get_info_all();
+  if (!isset($info[$etype])) {
+    // @FIXME CRITICAL
+    // When calling hook_schema in  a modules module.install, module's
+    // hook_entityspice_info does not exist yet.
+    $info[$etype] = _entityspice_info_defaults($etype);
+  }
+  return $info[$etype];
+}
+
+/**
+ * Get information of all modules implementing hook_entityspice_info().
+ *
+ * Disables entityspice cache if ENTITYSPICE_DEVELOPMENT flag is set to true.
+ *
+ * Will catch you and burn your kittens if you do not return what this
+ * function expects, in you entity spice hook.
+ *
+ * @throws \Exception
+ */
+function _entityspice_get_info_all() {
+  $drupal_static_fast = &drupal_static(__FUNCTION__, ['info' => []]);
+  $info = &$drupal_static_fast['info'];
+
+  if (empty($info) || ENTITYSPICE_DEVELOPMENT) {
+    $info = cache_get('entityspice');
+    if (empty($info) || ENTITYSPICE_DEVELOPMENT) {
+      $info = [];
+      $already = [];
+      foreach (module_implements('entityspice_info') as $module) {
+        // Get entity types defined by module.
+        $invoke = module_invoke($module, 'entityspice_info');
+        if (!is_array($invoke)) {
+          throw new Exception("module [$module] did not return an array for hook_entityspice_info");
+        }
+        foreach ($invoke as $entity_type => $details) {
+          if (isset($already[$entity_type])) {
+            throw new Exception(
+              'duplicate entity type definition by modules ' .
+              $module .
+              ' and ' .
+              $already[$entity_type] .
+              'for entity type [' .
+              $entity_type .
+              '], if this is on purpose, use drupal_alter for entityspice_info instead.'
+            );
+          }
+          if (!is_array($details)) {
+            throw new Exception(
+              'entity type [' .
+              $entity_type .
+              '] details defined by module [' .
+              $module .
+              '] is not an array.'
+            );
+          }
+          $already[$entity_type] = $module;
+          $info[$entity_type] = $details + _entityspice_info_defaults($entity_type);
+        }
+      }
+      drupal_alter('entityspice_info', $info);
+    }
+  }
+
+  return $info;
+}
+
+/**
+ * Same as _entityspice_get_info() but overrides provided values in $overrides.
+ *
+ * Only first level array is supported.
+ *
+ * @TODO replace with simpler array_merge or something.
+ *
+ * @param string $etype
+ * @param array $overrides
+ *
+ * @return mixed
+ * @throws \Exception
+ */
+function _entityspice_get_info_override($etype, array $overrides) {
+  // TODO should we cache this? don't think so.
+  $info = _entityspice_get_info($etype);
+  foreach ($overrides as $name => $value) {
+    if (is_array($value)) {
+      foreach ($value as $k => $v) {
+        $info[$name][$k] = $v;
+      }
+    }
+    else {
+      $info[$name] = $value;
+    }
+  }
+  return $info;
+}
+
+function _entityspice_get_entity_name($etype, $entity, array $overrides = []) {
+  $info = _entityspice_get_info_override($etype, $overrides);
+
+  // @TODO why underscored?
+  if (isset($overrides['_name'])) {
+    return $overrides['_name'];
+  }
+  elseif ($info['has_title']) {
+    return $entity->{$info['title key']};
+  }
+  else {
+    return $entity->getID();
+  }
+}
+
+/**
+ * Fill in default values for hook_entityspice_info().
+ *
+ * If implementing module has not provided any peace of information a default
+ * value if provided here. This makes isset() all over the code unnecessary.
+ *
+ * @param string $etype
+ *
+ * @return array
+ */
+function _entityspice_info_defaults($etype) {
+  // TODO replace spaces
+
+  $d['module'] = $etype;
+
+  // Names.
+  $d['machine_name'] = $etype;
+  $d['concat_camel'] =
+    str_replace(' ', '', ucwords(str_replace('_', ' ', $etype)));
+  $d['label'] =
+    ucwords(str_replace('_', ' ', $etype));
+
+  // Properties and Bundles.
+  $d['bundle_machine_name'] = $etype . '_bundle';
+  // @TODO rename
+  $d['bundle_id_key'] = 'bundle_id';
+  $d['bundle key name'] = 'bundle';
+  // @TODO rename
+  $d['idkey'] = 'eid';
+  // @TODO rename.
+  $d['ridkey'] = 'reid';
+  $d['title key'] = 'title';
+  $d['title label'] = 'Title';
+
+  // Database tables.
+  $d['base table'] = $etype;
+  $d['revision table'] = $etype . '_revision';
+  $d['bundle table'] = $etype . '_bundle';
+
+  // Forms.
+  $d['add form'] = $etype . '_form';
+  $d['edit form'] = $etype . '_form';
+  $d['delete form'] = $etype . '_delete_form';
+  $d['forms file'] = [
+    // Can be '' but must be set. Final slash is needed.
+    'directory' => 'inc/',
+    'file' => "${etype}.forms",
+    'suffix' => 'inc',
+  ];
+
+  // @TODO what?
+  $d['default uri base'] = 'es/' . $etype;
+
+  // Is/Has.
+  $d['has_title'] = TRUE;
+  $d['has_uid'] = TRUE;
+  $d['has_updated'] = TRUE;
+  $d['has_created'] = TRUE;
+  $d['has_title'] = TRUE;
+  $d['has_revision'] = TRUE;
+  $d['has bundle'] = TRUE;
+  $d['has forms file'] = TRUE;
+
+  $d['is fieldable'] = TRUE;
+  $d['is bundle fieldable'] = FALSE;
+
+  // Files.
+  $d['bundle admin file'] = $d['bundle_machine_name'] . '.admin.inc';
+
+  // Functions, Hooks and Callbacks.
+  $d['access callback'] = $etype . '_access';
+  $d['bundle access callback'] = $etype . '_bundle_access';
+  $d['bundle form submit delete'] = '_entityspice_entity_bundle_form_submit_delete';
+  $d['bundle submit delete'] = '_entityspice_entity_bundle_form_submit_delete';
+  $d['bundle exists callback'] = $etype . '_get_bundles';
+  $d['entity form submit callback'] = $etype . '_form_submit';
+  $d['entity delete form submit callback'] = $etype . '_delete_form_submit';
+  $d['entity form validation callback'] = $etype . '_form_validate';
+
+  // Paths.
+  $d['parent admin path'] = 'admin/structure/' . $etype;
+  $d['parent userland path'] = 'es/' . $etype;
+  // Redirected to these pages after adding/removing bundles.
+  $d['bundle submit redirect'] = $d['parent admin path'];
+  $d['bundle delete redirect'] = $d['parent admin path'];
+  $d['entity delete redirect'] = '/';
+
+  // TODO what?
+  // Various stuff needed by this function (info alter):
+  $d['_entityspice_entity_info_alter'] = [
+    'bundle argument' => 4,
+    'parent' => 'admin/structure/' . $etype,
+    'name' => $etype . '_' . $d['bundle key name'],
+    'path' => 'admin/structure/' . $etype . '/manage/%' . $etype . '_' . $d['bundle key name'],
+    'real path base' => 'admin/structure/' . $etype . '/manage',
+  ];
+
+  // This variable needed in hook_menu so that ES will know what will be the
+  // position of arg in each path. It is determined by how many words between
+  // slashes (es/mytype/% : 2) appear before the arg.
+  $d['parent user path arg no'] =
+    count(explode('/', $d['parent userland path']));
+
+  $d['has inline entity form support'] = TRUE;
+  $d['inline inline entity form']['controller'] =
+    $d['concat_camel'] . 'InlineEntityFormController';
+
+  return $d;
+}
+
+// ____________________________________________________________________ UTILITY
+
+/**
+ * Given a field types, List all fields available of that type.
+ *
+ * Good for when you want user to select an available field of specific type
+ * in form.
+ *
+ * @param string $type
+ *   Machine name of requested field type.
+ * @param boolean/array $has_none_option
+ *   Indicates whether to add a 'NONE' option as list first element. If it's
+ *   value is non-array, Then a default array of ('NONE'=> 'NONE') will be
+ *   used, Otherwise the passed array will be used as none option.
+ *   If an array is passed it must only have one key and it's value must (only)
+ *   be a single translated string.
+ *
+ * @return array suitable for form API select element.
+ */
+function _entityspice_generate_field_list($type = NULL, $none_option = TRUE) {
+  // Also correctly checks an empty array.
+  if ($none_option) {
+    if (is_array($none_option)) {
+      $fields = $none_option;
+    }
+    else {
+      $fields = ['NONE' => t('NONE')];
+    }
+  }
+  else {
+    $fields = [];
+  }
+
+  foreach (field_info_fields() as $field) {
+    if ($type && $field['type'] != $type) {
+      continue;
+    }
+
+    $fields[$field['field_name']] = $field['field_name'];
+  }
+
+  sort($fields);
+  return $fields;
+}
+
+/**
+ * Same as _entityspice_generate_field_list but only fields belonging to a
+ * bundle of specific entity type.
+ */
+function _entityspice_generate_field_list_from_bundle($etype, $bundle, $none_option = FALSE) {
+  // Also correctly checks an empty array.
+  if ($none_option) {
+    if (is_array($none_option)) {
+      $fields = $none_option;
+    }
+    else {
+      $fields = ['NONE' => t('NONE')];
+    }
+  }
+  else {
+    $fields = [];
+  }
+
+  foreach (field_info_instances($etype, $bundle) as $name => $crap) {
+    $fields[$name] = check_plain($name) . ' - ' . check_plain($crap['label']);
+  }
+
+  ksort($fields);
+  return $fields;
+}
+
+// _______________________________________________________________________ MAIN
+
+/**
+ * Menu callback.
+ *
+ * Purpose: List available entity types created using ES to add a new entity.
+ *
+ * @throws \Exception
+ */
+function _entityspice_default_page() {
+  $item = menu_get_item();
+  $content = system_admin_menu_block($item);
+
+  // TODO
+  // Bypass the entity/add listing if only one entity bundle is available.
+  // if (count($content) == 1) {
+  //  $item = array_shift($content);
+  //  drupal_goto($item['href']);
+  // }
+
+  $types = _entityspice_get_info_all();
+  $vars = ['content' => $content, 'types' => array_keys($types)];
+  return theme('entityspice_default_page', $vars);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function entityspice_menu() {
+  // Default base path for entity types.
+  $items['es'] = [
+    'title' => 'Entity Spice',
+    'page callback' => '_entityspice_default_page',
+    'access arguments' => ['administer entityspice'],
+    'description' => 'Default entity page for EntitySpice.',
+  ];
+
+  // Will output information about all modules defining entities using ES.
+  if (module_exists('devel')) {
+    _entityspice_devel_menu($items);
+  }
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function entityspice_permission() {
+  $p['administer entityspice'] = [
+    'title' => 'Administer EntitySpice',
+  ];
+  return $p;
+}

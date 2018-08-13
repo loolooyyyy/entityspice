@@ -1,0 +1,6 @@
+name = EntitySpice
+description = Entity API extension.
+core = 7.x
+package = entity
+
+dependencies[] = entity

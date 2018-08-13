@@ -1,0 +1,7 @@
+<?php
+
+require_once 'entityspice_oven.inc';
+
+if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
+  require_once 'entityspice_oven.drush.inc';
+}

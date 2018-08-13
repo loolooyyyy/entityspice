@@ -1,0 +1,10 @@
+remove stuff from _entityspice_entity_info if etype does not support it, e.g bundle and title
+
+in docs say entities without title field should override buildContent of EntitySpiceEntity.
+  -> or fix oven.
+
+override title property key name and label.
+
+ Add a page to see entity types info, their menu options and default entity type properties
+ defined by ES:
+function entityspice_admin_menu_output_alter(&$content)

@@ -1,0 +1,3 @@
+Q0. Can I use non-ascii characters for entity label?
+A0. No, use ascii (english) labels and use translate module to have non-ascii
+    labels.

@@ -1,0 +1,6 @@
+name = Entityspice Oven
+description = Will cook new entity types for you. DO NOT ENABLE IN PRODUCTION.
+core = 7.x
+package = entity
+
+dependencies[] = entityspice
