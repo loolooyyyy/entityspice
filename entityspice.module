@@ -26,6 +26,110 @@ if (ENTITYSPICE_DEVELOPMENT) {
 
 require_once 'inc/_require.inc';
 
+interface EntitySpiceEntityConfiguration {
+
+  function module();
+
+  function machineName();
+
+  function concatCamelName();
+
+  function label();
+
+  function bundleMachineName();
+
+  function bundleIdKey();
+
+  function bundleKeyName();
+
+  function idKey();
+
+  function ridKey();
+
+  function titleKey();
+
+  function titleLabel();
+
+  function baseTable();
+
+  function revisionTable();
+
+  function bundleTable();
+
+  function addForm();
+
+  function editForm();
+
+  function deleteForm();
+
+  function formsFile();
+
+  function uriBase();
+
+
+  function hasTitle();
+
+  function hasUid();
+
+  function hasUpdated();
+
+  function hasCreated();
+
+  function hasRevision();
+
+  function hasBundle();
+
+
+  function isFieldable();
+
+  function isBundleFieldable();
+
+
+  function hasFormsFile();
+
+  function bundleAdminFile();
+
+
+  function accessCallback();
+
+  function bundleAccessCallback();
+
+  function bundleFormSubmitDelete();
+
+  function bundleSubmitDelete();
+
+  function bundleExistsCallback();
+
+  function entityFormSubmitCallback();
+
+  function entityDeleteFormSubmitCallback();
+
+  function entityFormValidationCallback();
+
+
+  function parentAdminPath();
+
+  function parentUserlandPath();
+
+  function bundleSubmitRedirect();
+
+  function bundleDeleteRedirect();
+
+  function entityDeleteRedirect();
+
+
+  function hasInlineEntityFormSupport();
+
+  function inlineInlineEntityForm();
+
+  function concatCamel();
+}
+
+abstract class DefaultEntitySpiceEntityConfiguration implements EntitySpiceEntityConfiguration {
+
+}
+
+
 /**
  * Thrown when some operation is not supported by an entity type.
  *
@@ -128,7 +232,6 @@ function _entityspice_get_info_all() {
  * @param array $overrides
  *
  * @return mixed
- * @throws \Exception
  */
 function _entityspice_get_info_override($etype, array $overrides) {
   // TODO should we cache this? don't think so.
@@ -219,7 +322,6 @@ function _entityspice_info_defaults($etype) {
   $d['has_uid'] = TRUE;
   $d['has_updated'] = TRUE;
   $d['has_created'] = TRUE;
-  $d['has_title'] = TRUE;
   $d['has_revision'] = TRUE;
   $d['has bundle'] = TRUE;
   $d['has forms file'] = TRUE;
@@ -319,6 +421,12 @@ function _entityspice_generate_field_list($type = NULL, $none_option = TRUE) {
 /**
  * Same as _entityspice_generate_field_list but only fields belonging to a
  * bundle of specific entity type.
+ *
+ * @param $etype string entity type
+ * @param $bundle string entity bundle
+ * @param bool $none_option whether to include a 'none' option in the list.
+ *
+ * @return array list of fields.
  */
 function _entityspice_generate_field_list_from_bundle($etype, $bundle, $none_option = FALSE) {
   // Also correctly checks an empty array.

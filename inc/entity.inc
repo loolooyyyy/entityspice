@@ -97,6 +97,9 @@ function _entityspice_get_entity($etype, $entity) {
  *
  * @param string $name
  *   If set, the bundle with the given name is returned.
+ *
+ * @return array|mixed
+ * @throws \EntitySpiceOperationNotSupported
  */
 function _entityspice_entity_get_bundles($etype, $name = NULL) {
   if (!_entityspice_get_info($etype)) {
@@ -247,6 +250,7 @@ function _entityspice_entity_info($etype) {
  *
  * @return array
  *   Executed query object.
+ * @throws \Exception
  */
 function _entityspice_filter_query($entity_type, $header, $bundle = '', $properties = [], $fields = [], $items_page = 10) {
   $has_revision = _entityspice_get_info($entity_type)['has_revision'];
@@ -371,7 +375,6 @@ function _entityspice_entity_schema($etype, array $additional_fields = [], array
         'unsigned' => TRUE,
         'not null' => TRUE,
       ],
-
 
       'created' => [
         'description' => 'The Unix timestamp of the entity creation time.',

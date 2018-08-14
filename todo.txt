@@ -8,3 +8,5 @@ override title property key name and label.
  Add a page to see entity types info, their menu options and default entity type properties
  defined by ES:
 function entityspice_admin_menu_output_alter(&$content)
+
+say about devel

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# works for me :shrug
-
 set -eu
 
 basename="entityspice"
@@ -37,8 +35,10 @@ function upload() {
 	gdrive upload "${name}.tar.xz"
 }
 
+
 clean
 get
 archive
 upload
+
 

@@ -4,6 +4,12 @@
 
 /**
  * Page callback: wrapper for devel_load_object.
+ *
+ * @param $etype string entity type.
+ * @param $object object entity object.
+ * @param string $name name shown when displaying entity.
+ *
+ * @return string|void
  */
 function _entityspice_devel_load_object($etype, $object, $name = NULL) {
   $object = _entityspice_get_entity($etype, $object);
@@ -18,6 +24,12 @@ function _entityspice_devel_load_object($etype, $object, $name = NULL) {
 
 /**
  * Page callback: wrapper for devel_render_object.
+ *
+ * @param $etype string entity type.
+ * @param $object object entity object.
+ * @param string $name name shown when displaying entity.
+ *
+ * @return mixed devel result
  */
 function _entityspice_devel_render_object($etype, $object, $name = NULL) {
   $object = _entityspice_get_entity($etype, $object);
@@ -34,6 +46,11 @@ function _entityspice_devel_render_object($etype, $object, $name = NULL) {
 
 /**
  * implementation of hook_menu().
+ *
+ * @param $etype string entity type.
+ *
+ * @return mixed
+ * @throws \Exception
  */
 function _entityspice_entity_menu_items($etype) {
   $info = _entityspice_get_info($etype);
@@ -73,67 +90,63 @@ function _entityspice_entity_menu_items($etype) {
     ];
   }
 
-  $argno = $info['parent user path arg no'];
+  $arg_no = $info['parent user path arg no'];
   $access_cbk = $etype . '_entity_access';
+
   $items[$parent_path_u . '/%'] = [
     'title callback' => '_entityspice_entity_title',
-    'title arguments' => [$etype, $argno],
+    'title arguments' => [$etype, $arg_no],
     'page callback' => '_entityspice_entity_view',
-    'page arguments' => [$etype, $argno],
+    'page arguments' => [$etype, $arg_no],
     'weight' => 10,
     'access callback' => $access_cbk,
-    'access arguments' => ['view', $argno],
+    'access arguments' => ['view', $arg_no],
   ];
-
   $items[$parent_path_u . '/%/view'] = [
     'title' => 'Summary',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
     'access callback' => $access_cbk,
-    'access arguments' => ['view', $argno],
+    'access arguments' => ['view', $arg_no],
   ];
-
   $items[$parent_path_u . '/%/view/edit'] = [
     'title' => 'Edit',
     'page callback' => 'drupal_get_form',
-    'page arguments' => [$edit_form, $argno],
+    'page arguments' => [$edit_form, $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
     'access callback' => $access_cbk,
-    'access arguments' => ['edit', $argno],
+    'access arguments' => ['edit', $arg_no],
   ];
-
   $items[$parent_path_u . '/%/view/delete'] = [
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
-    'page arguments' => [$delete_form, $argno],
+    'page arguments' => [$delete_form, $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
     'access callback' => $access_cbk,
-    'access arguments' => ['delete', $argno],
+    'access arguments' => ['delete', $arg_no],
   ];
 
   if (module_exists('devel')) {
     $items[$parent_path_u . '/%/devel'] = [
       'title' => 'Devel',
       'page callback' => '_entityspice_devel_load_object',
-      'page arguments' => [$etype, $argno],
+      'page arguments' => [$etype, $arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
       'access arguments' => ['access devel information'],
     ];
-
     $items[$parent_path_u . '/%/devel/load'] = [
       'title' => 'Load',
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'access arguments' => ['access devel information'],
     ];
-
     $items[$parent_path_u . '/%/devel/render'] = [
       'title' => 'Render',
       'page callback' => '_entityspice_devel_render_object',
-      'page arguments' => [$etype, $argno],
+      'page arguments' => [$etype, $arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
       'access arguments' => ['access devel information'],
@@ -152,6 +165,13 @@ function _entityspice_entity_menu_items($etype) {
  * break display of child items. Instead, dynamically add the local action.
  *
  * Adds action link to 'xxxx/yyyy/add' on 'xxxx/yyyyy' page.
+ *
+ * @param $etype entity type
+ * @param $data
+ * @param $router_item
+ * @param $root_path
+ *
+ * @throws \Exception
  */
 function _entityspice_menu_local_task_alter($etype, &$data, $router_item, $root_path) {
   if ($path = _entityspice_get_info($etype)['parent admin path'] == $root_path) {
@@ -167,6 +187,11 @@ function _entityspice_menu_local_task_alter($etype, &$data, $router_item, $root_
 
 /**
  * implementation of hook_admin_menu_map().
+ *
+ * @param $etype string entity type.
+ *
+ * @return array admin menu map
+ * @throws \EntitySpiceOperationNotSupported
  */
 function _entityspice_admin_menu_map($etype) {
   $i = _entityspice_get_info($etype)['_entityspice_entity_info_alter'];
@@ -185,6 +210,11 @@ function _entityspice_admin_menu_map($etype) {
  *
  * Is called in menu callbacks, like entity delete form or entity view page, to
  * make sure asked entity actually exists.
+ *
+ * @param $etype string entity type
+ * @param $entity object/int entity id or entity object with an id.
+ *
+ * @return bool true if entity of etype exists with the given id.
  */
 function _entityspice_entity_in_path_exists($etype, $entity) {
   $id = is_object($entity) ? $entity->getID() : $entity;
@@ -198,6 +228,11 @@ function _entityspice_entity_in_path_exists($etype, $entity) {
  *
  * Return a list of available entities to add or the add entity page if there's
  * only a single entity type.
+ *
+ * @param $etype string entity type.
+ *
+ * @return string themed output of bundles list for an entity type.
+ * @throws \Exception
  */
 function _entityspice_entity_bundles_list_page($etype) {
   $item = menu_get_item();
@@ -217,6 +252,12 @@ function _entityspice_entity_bundles_list_page($etype) {
 
 /**
  * Page callback for entity overview page.
+ *
+ * @param $etype string entity type.
+ * @param array $overrides overridden values when getting entity type info.
+ *
+ * @return array
+ * @throws \Exception
  */
 function _entityspice_entity_page($etype, array $overrides = []) {
   // Setup the header for both the query and table.
@@ -368,6 +409,13 @@ function _entityspice_entity_page($etype, array $overrides = []) {
 
 /**
  * Page callback for adding an entity.
+ *
+ * @param $etype string entity type
+ * @param $bundle string bundle of entity being added.
+ * @param array $overrides overridden values when getting entity type info.
+ *
+ * @return array entity add form.
+ * @throws \Exception
  */
 function _entityspice_entity_add_page($etype, $bundle, array $overrides = []) {
   $info = _entityspice_get_info($etype);

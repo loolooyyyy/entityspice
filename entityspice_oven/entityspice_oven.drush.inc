@@ -162,6 +162,10 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
 
   // ===================================================================== EKRAN
   $tmp = drush_tempdir() . '/' . $machine_name;
+  if (!drush_mkdir($tmp)) {
+    drush_log('could not mkdir: ' . $tmp);
+    return FALSE;
+  }
   if ($err = _entityspice_oven_ekran($tmp, $tokens)) {
     drush_log("failed: $err", 'error');
     return FALSE;

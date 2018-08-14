@@ -6,7 +6,7 @@
  */
 
 /**
- * Coppied from RedHen.
+ * Copied from RedHen.
  */
 abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityFormController {
 

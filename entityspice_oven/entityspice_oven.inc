@@ -387,7 +387,7 @@ function _entityspice_oven_render(array $tokens) {
 
 function _entityspice_oven_ekran($target_dir, array $tokens) {
   if (!chdir($target_dir)) {
-    return 'could not chdir into target';
+    return 'could not chdir into target: ' . $target_dir;
   }
   foreach (_entityspice_oven_render($tokens) as $file => $text) {
     if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
