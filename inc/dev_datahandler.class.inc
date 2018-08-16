@@ -292,12 +292,36 @@ function _entityspice_hook_info_page($etype = NULL) {
   return kprint_r($print, TRUE);
 }
 
-function _entityspice_devel_menu(array &$items) {
-  $items['devel/entityspice'] = [
-    'title' => 'hook_entityspice_info()',
-    'page callback' => '_entityspice_hook_info_page',
-    'access arguments' => ['access devel information'],
-    'description' => 'View all modules and their info implementing entityspice hook',
-  ];
-  return $items;
+
+
+function _entityspice_devel_load_object($etype, $object, $name = NULL) {
+  $object = _entityspice_get_entity($etype, $object);
+  if (module_exists('devel')) {
+    module_load_include('inc', 'devel', 'devel.pages');
+    return devel_load_object($etype, $object, $name);
+  }
+  else {
+    return drupal_not_found();
+  }
 }
+
+/**
+ * Page callback: wrapper for devel_render_object.
+ *
+ * @param $etype string entity type.
+ * @param $object object entity object.
+ * @param string $name name shown when displaying entity.
+ *
+ * @return mixed devel result
+ */
+function _entityspice_devel_render_object($etype, $object, $name = NULL) {
+  $object = _entityspice_get_entity($etype, $object);
+  if (module_exists('devel')) {
+    module_load_include('inc', 'devel', 'devel.pages');
+    return devel_render_object($etype, $object, $name);
+  }
+  else {
+    return drupal_not_found();
+  }
+}
+

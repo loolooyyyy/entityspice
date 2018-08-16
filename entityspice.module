@@ -26,13 +26,24 @@ if (ENTITYSPICE_DEVELOPMENT) {
 
 require_once 'inc/_require.inc';
 
-interface EntitySpiceEntityConfiguration {
+
+/**
+ * Configuration keys of an entity supported by entity spice.
+ *
+ * None of methods declared in this class or implementation should take a key,
+ * and nothing other than simple values indication support for a future should
+ * be returned. An implementation must be a simple immutable value class with
+ * no logic. Else, it is a design error, a disaster.
+ */
+interface EntitySpiceEntityConfig {
 
   function module();
 
   function machineName();
 
-  function concatCamelName();
+  function camelNameLowerFirst();
+
+  function camelNameUpperFirst();
 
   function label();
 
@@ -45,6 +56,8 @@ interface EntitySpiceEntityConfiguration {
   function idKey();
 
   function ridKey();
+
+  function uidKey();
 
   function titleKey();
 
@@ -76,6 +89,8 @@ interface EntitySpiceEntityConfiguration {
   function hasCreated();
 
   function hasRevision();
+
+  function hasRevisionLog();
 
   function hasBundle();
 
@@ -122,57 +137,255 @@ interface EntitySpiceEntityConfiguration {
 
   function inlineInlineEntityForm();
 
-  function concatCamel();
-}
 
-abstract class DefaultEntitySpiceEntityConfiguration implements EntitySpiceEntityConfiguration {
+  function accessControlledActions();
 
 }
 
+/**
+ * Default implementation of \EntitySpiceEntityConfiguration with sane values.
+ *
+ * This implementation does NOT call any of subclass methods. Do NOT expect
+ * behaviour of a method to change, overriding some other method.
+ */
+abstract class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
+
+  private $machine_name;
+
+  private $camel_name_lower_first;
+
+  private $camel_name_upper_first;
+
+  private $label_name;
+
+  /**
+   * @param $machine_name string machine name of entity this config belongs to.
+   */
+  public function __construct($machine_name) {
+    if (empty($machine_name)
+      || !is_string($machine_name)
+      || !ctype_alnum($machine_name)
+      || ctype_digit($machine_name[0])
+      || $machine_name[0] === '_') {
+      throw new RuntimeException("bad machine name: " .
+        (is_string($machine_name) ? $machine_name : 'NON_STRING_GIVEN'));
+    }
+
+    $this->machine_name = $machine_name;
+    $this->label_name = ucwords(str_replace('_', ' ', $machine_name));
+    $this->camel_name_upper_first = str_replace(' ', '', $label_name);
+    $this->camel_name_lower_first = lcfirst($this->camel_name_upper_first);
+  }
+
+  function module() {
+    return $this->machine_name;
+  }
+
+  function machineName() {
+    return $this->machine_name;
+  }
+
+  function camelNameLowerFirst() {
+    return $this->camel_name_lower_first;
+  }
+
+  function camelNameUpperFirst() {
+    return $this->camel_name_upper_first;
+  }
+
+  function label() {
+    return $this->label_name;
+  }
+
+  function bundleMachineName() {
+    return $this->machine_name . '_bundle';
+  }
+
+  function bundleIdKey() {
+    return "bid";
+  }
+
+  function bundleKeyName() {
+    return "bid";
+  }
+
+  function idKey() {
+    return "eid";
+  }
+
+  function ridKey() {
+    return "rid";
+  }
+
+  function uidKey() {
+    return "uid";
+  }
+
+  function titleKey() {
+    return "title";
+  }
+
+  function titleLabel() {
+    return "Title";
+  }
+
+  function baseTable() {
+    return $this->machine_name;
+  }
+
+  function revisionTable() {
+    return $this->machine_name . '_revision';
+  }
+
+  function bundleTable() {
+    return $this->machine_name . '_bundle';
+  }
+
+  abstract function addForm();
+
+  abstract function editForm();
+
+  abstract function deleteForm();
+
+  abstract function formsFile();
+
+  function uriBase() {
+    return $this->camel_name_lower_first;
+  }
+
+
+  function hasTitle() {
+    return TRUE;
+  }
+
+  function hasUid() {
+    return TRUE;
+  }
+
+  function hasUpdated() {
+    return TRUE;
+  }
+
+  function hasCreated() {
+    return TRUE;
+  }
+
+  function hasRevision() {
+    return FALSE;
+  }
+
+  function hasRevisionLog() {
+    return TRUE;
+  }
+
+  function hasBundle() {
+    return TRUE;
+  }
+
+
+  function isFieldable() {
+    return TRUE;
+  }
+
+  function isBundleFieldable() {
+    return TRUE;
+  }
+
+
+  abstract function hasFormsFile();
+
+  abstract function bundleAdminFile();
+
+
+  abstract function accessCallback();
+
+  abstract function bundleAccessCallback();
+
+  abstract function bundleFormSubmitDelete();
+
+  abstract function bundleSubmitDelete();
+
+  abstract function bundleExistsCallback();
+
+  abstract function entityFormSubmitCallback();
+
+  abstract function entityDeleteFormSubmitCallback();
+
+  abstract function entityFormValidationCallback();
+
+
+  abstract function parentAdminPath();
+
+  abstract function parentUserlandPath();
+
+  abstract function bundleSubmitRedirect();
+
+  abstract function bundleDeleteRedirect();
+
+  abstract function entityDeleteRedirect();
+
+
+  function hasInlineEntityFormSupport() {
+    return TRUE;
+  }
+
+  abstract function inlineInlineEntityForm();
+
+
+  function accessControlledActions() {
+    return [
+      'administer',
+      'create',
+      'delete',
+      'view',
+      'archive',
+    ];
+  }
+
+}
 
 /**
  * Thrown when some operation is not supported by an entity type.
  *
  * e.g get title (as not all entity types might have a title).
  */
-class EntitySpiceOperationNotSupported extends Exception {
+class EntitySpiceOperationNotSupported extends RuntimeException {
 
 }
 
 // ___________________________________________________________________ METADATA
 
 /**
- * Get hook_entityspice_info of an specific entity type.
+ * Get hook_entityspice_info() of an specific entity type.
  *
  * @param string $etype
  *
- * @return mixed all metadata of an entity type.
- * @throws \Exception
+ * @return object \EntitySpiceEntityConfig for $etype.
  */
 function _entityspice_get_info($etype) {
   if (empty($etype)) {
-    throw new Exception("entity type not specified");
+    throw new RuntimeException("entity type not specified");
   }
 
   $info = _entityspice_get_info_all();
   if (!isset($info[$etype])) {
+    // @TODO CRITICAL
     // @FIXME CRITICAL
     // When calling hook_schema in  a modules module.install, module's
     // hook_entityspice_info does not exist yet.
     $info[$etype] = _entityspice_info_defaults($etype);
   }
+
   return $info[$etype];
 }
 
 /**
- * Get information of all modules implementing hook_entityspice_info().
+ * Get result of all modules implementing hook_entityspice_info().
  *
  * Disables entityspice cache if ENTITYSPICE_DEVELOPMENT flag is set to true.
  *
  * Will catch you and burn your kittens if you do not return what this
  * function expects, in you entity spice hook.
- *
- * @throws \Exception
  */
 function _entityspice_get_info_all() {
   $drupal_static_fast = &drupal_static(__FUNCTION__, ['info' => []]);
@@ -186,12 +399,12 @@ function _entityspice_get_info_all() {
       foreach (module_implements('entityspice_info') as $module) {
         // Get entity types defined by module.
         $invoke = module_invoke($module, 'entityspice_info');
-        if (!is_array($invoke)) {
-          throw new Exception("module [$module] did not return an array for hook_entityspice_info");
+        if (!is_object($invoke) || !($invoke instanceof EntitySpiceEntityConfig)) {
+          throw new RuntimeException("module [$module] did not return the required object for hook_entityspice_info");
         }
         foreach ($invoke as $entity_type => $details) {
           if (isset($already[$entity_type])) {
-            throw new Exception(
+            throw new RuntimeException(
               'duplicate entity type definition by modules ' .
               $module .
               ' and ' .
@@ -202,7 +415,7 @@ function _entityspice_get_info_all() {
             );
           }
           if (!is_array($details)) {
-            throw new Exception(
+            throw new RuntimeException(
               'entity type [' .
               $entity_type .
               '] details defined by module [' .
@@ -226,6 +439,9 @@ function _entityspice_get_info_all() {
  *
  * Only first level array is supported.
  *
+ *
+ * @TODO remove this altogether.
+ *
  * @TODO replace with simpler array_merge or something.
  *
  * @param string $etype
@@ -234,7 +450,6 @@ function _entityspice_get_info_all() {
  * @return mixed
  */
 function _entityspice_get_info_override($etype, array $overrides) {
-  // TODO should we cache this? don't think so.
   $info = _entityspice_get_info($etype);
   foreach ($overrides as $name => $value) {
     if (is_array($value)) {
@@ -249,26 +464,14 @@ function _entityspice_get_info_override($etype, array $overrides) {
   return $info;
 }
 
-function _entityspice_get_entity_name($etype, $entity, array $overrides = []) {
-  $info = _entityspice_get_info_override($etype, $overrides);
-
-  // @TODO why underscored?
-  if (isset($overrides['_name'])) {
-    return $overrides['_name'];
-  }
-  elseif ($info['has_title']) {
-    return $entity->{$info['title key']};
-  }
-  else {
-    return $entity->getID();
-  }
-}
-
 /**
  * Fill in default values for hook_entityspice_info().
  *
  * If implementing module has not provided any peace of information a default
  * value if provided here. This makes isset() all over the code unnecessary.
+ *
+ *
+ * @TODO remove altogether.
  *
  * @param string $etype
  *
@@ -373,47 +576,56 @@ function _entityspice_info_defaults($etype) {
   return $d;
 }
 
+
+/**
+ * @TODO code smell.
+ *
+ * @param $etype
+ * @param $entity
+ * @param array $overrides
+ *
+ * @return mixed
+ */
+function _entityspice_get_entity_name($etype, $entity, array $overrides = []) {
+  $info = _entityspice_get_info_override($etype, $overrides);
+
+  // @TODO why underscored?
+  if (isset($overrides['_name'])) {
+    return $overrides['_name'];
+  }
+  elseif ($info['has_title']) {
+    return $entity->{$info['title key']};
+  }
+  else {
+    return $entity->getID();
+  }
+}
+
 // ____________________________________________________________________ UTILITY
 
 /**
- * Given a field types, List all fields available of that type.
+ * Given a field types, List all fields available of that field type.
  *
- * Good for when you want user to select an available field of specific type
- * in form.
+ * Good for when you want user to select an available field of specific field
+ * type in form.
  *
- * @param string $type
+ * @param string $field_type
  *   Machine name of requested field type.
- * @param boolean/array $has_none_option
- *   Indicates whether to add a 'NONE' option as list first element. If it's
- *   value is non-array, Then a default array of ('NONE'=> 'NONE') will be
- *   used, Otherwise the passed array will be used as none option.
- *   If an array is passed it must only have one key and it's value must (only)
- *   be a single translated string.
+ * @param boolean $has_none_option
+ *   Whether to add a 'NONE' option as the list's first element, good for a list
+ *   with optional options.
  *
  * @return array suitable for form API select element.
  */
-function _entityspice_generate_field_list($type = NULL, $none_option = TRUE) {
+function _entityspice_generate_field_list($field_type, $has_none_option) {
   // Also correctly checks an empty array.
-  if ($none_option) {
-    if (is_array($none_option)) {
-      $fields = $none_option;
-    }
-    else {
-      $fields = ['NONE' => t('NONE')];
-    }
-  }
-  else {
-    $fields = [];
-  }
-
+  $fields = $has_none_option ? ['NONE' => t('NONE')] : [];
   foreach (field_info_fields() as $field) {
-    if ($type && $field['type'] != $type) {
+    if ($field_type && $field['type'] != $field_type) {
       continue;
     }
-
     $fields[$field['field_name']] = $field['field_name'];
   }
-
   sort($fields);
   return $fields;
 }
@@ -428,24 +640,11 @@ function _entityspice_generate_field_list($type = NULL, $none_option = TRUE) {
  *
  * @return array list of fields.
  */
-function _entityspice_generate_field_list_from_bundle($etype, $bundle, $none_option = FALSE) {
-  // Also correctly checks an empty array.
-  if ($none_option) {
-    if (is_array($none_option)) {
-      $fields = $none_option;
-    }
-    else {
-      $fields = ['NONE' => t('NONE')];
-    }
-  }
-  else {
-    $fields = [];
-  }
-
+function _entityspice_generate_field_list_from_bundle($etype, $bundle, $none_option) {
+  $fields = $none_option ? ['NONE' => t('NONE')] : [];
   foreach (field_info_instances($etype, $bundle) as $name => $crap) {
     $fields[$name] = check_plain($name) . ' - ' . check_plain($crap['label']);
   }
-
   ksort($fields);
   return $fields;
 }
@@ -463,7 +662,7 @@ function _entityspice_default_page() {
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
 
-  // TODO
+  // @TODO
   // Bypass the entity/add listing if only one entity bundle is available.
   // if (count($content) == 1) {
   //  $item = array_shift($content);
@@ -480,7 +679,7 @@ function _entityspice_default_page() {
  */
 function entityspice_menu() {
   // Default base path for entity types.
-  $items['es'] = [
+  $items['entityspice'] = [
     'title' => 'Entity Spice',
     'page callback' => '_entityspice_default_page',
     'access arguments' => ['administer entityspice'],
@@ -489,7 +688,13 @@ function entityspice_menu() {
 
   // Will output information about all modules defining entities using ES.
   if (module_exists('devel')) {
-    _entityspice_devel_menu($items);
+    $items['devel/entityspice'] = [
+      'title' => 'hook_entityspice_info()',
+      'page callback' => '_entityspice_hook_info_page',
+      'access arguments' => ['access devel information'],
+      'description' => 'View all modules and their info implementing entityspice hook',
+      'file' => 'inc/dev_datahandler.class.inc',
+    ];
   }
 
   return $items;

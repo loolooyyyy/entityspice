@@ -11,41 +11,10 @@
  *
  * @return string|void
  */
-function _entityspice_devel_load_object($etype, $object, $name = NULL) {
-  $object = _entityspice_get_entity($etype, $object);
-  if (module_exists('devel')) {
-    module_load_include('inc', 'devel', 'devel.pages');
-    return devel_load_object($etype, $object, $name);
-  }
-  else {
-    return drupal_not_found();
-  }
-}
-
-/**
- * Page callback: wrapper for devel_render_object.
- *
- * @param $etype string entity type.
- * @param $object object entity object.
- * @param string $name name shown when displaying entity.
- *
- * @return mixed devel result
- */
-function _entityspice_devel_render_object($etype, $object, $name = NULL) {
-  $object = _entityspice_get_entity($etype, $object);
-  if (module_exists('devel')) {
-    module_load_include('inc', 'devel', 'devel.pages');
-    return devel_render_object($etype, $object, $name);
-  }
-  else {
-    return drupal_not_found();
-  }
-}
-
 // _______________________________________________________________________ MENU
 
 /**
- * implementation of hook_menu().
+ * implementation for hook_menu().
  *
  * @param $etype string entity type.
  *
@@ -133,6 +102,7 @@ function _entityspice_entity_menu_items($etype) {
     $items[$parent_path_u . '/%/devel'] = [
       'title' => 'Devel',
       'page callback' => '_entityspice_devel_load_object',
+      'file' => 'inc/dev_datahandler.class.inc',
       'page arguments' => [$etype, $arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
@@ -146,6 +116,7 @@ function _entityspice_entity_menu_items($etype) {
     $items[$parent_path_u . '/%/devel/render'] = [
       'title' => 'Render',
       'page callback' => '_entityspice_devel_render_object',
+      'file' => 'inc/dev_datahandler.class.inc',
       'page arguments' => [$etype, $arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
@@ -186,12 +157,11 @@ function _entityspice_menu_local_task_alter($etype, &$data, $router_item, $root_
 }
 
 /**
- * implementation of hook_admin_menu_map().
+ * implementation for hook_admin_menu_map().
  *
  * @param $etype string entity type.
  *
  * @return array admin menu map
- * @throws \EntitySpiceOperationNotSupported
  */
 function _entityspice_admin_menu_map($etype) {
   $i = _entityspice_get_info($etype)['_entityspice_entity_info_alter'];
@@ -216,7 +186,7 @@ function _entityspice_admin_menu_map($etype) {
  *
  * @return bool true if entity of etype exists with the given id.
  */
-function _entityspice_entity_in_path_exists($etype, $entity) {
+function _entityspice_entity_exists_in_db($etype, $entity) {
   $id = is_object($entity) ? $entity->getID() : $entity;
   return ctype_digit($id) && entity_load($etype, [$id]);
 }
@@ -226,13 +196,13 @@ function _entityspice_entity_in_path_exists($etype, $entity) {
 /**
  * Page callback for adding an entity.
  *
- * Return a list of available entities to add or the add entity page if there's
- * only a single entity type.
+ * Return a list of available bundles to add or the add entity page if there's
+ * only a single bundle.
  *
  * @param $etype string entity type.
  *
  * @return string themed output of bundles list for an entity type.
- * @throws \Exception
+ * @throws \Exception them() throws exception.
  */
 function _entityspice_entity_bundles_list_page($etype) {
   $item = menu_get_item();
@@ -259,7 +229,8 @@ function _entityspice_entity_bundles_list_page($etype) {
  * @return array
  * @throws \Exception
  */
-function _entityspice_entity_page($etype, array $overrides = []) {
+function _entityspice_entity_page($etype) {
+  // TODO critical, check _GET for safe input
   // Setup the header for both the query and table.
   $header = [
     'eid' => [
@@ -282,11 +253,8 @@ function _entityspice_entity_page($etype, array $overrides = []) {
     ],
   ];
 
-  $info = _entityspice_get_info_override($etype, $overrides);
-  $has_bundle = $info['has bundle'];
-  $has_revision = $info['has_revision'];
-
-  if ($has_bundle) {
+  $info = _entityspice_get_info($etype);
+  if ($info->hasBundle()) {
     $header['bundle'] = [
       'field' => 'bundle',
       'type' => 'property',
@@ -294,8 +262,7 @@ function _entityspice_entity_page($etype, array $overrides = []) {
       'specifier' => 'bundle',
     ];
   }
-
-  if ($has_revision) {
+  if ($info->hasRevision()) {
     $header['updated'] = [
       'field' => 'updated',
       'type' => 'property',
@@ -346,7 +313,7 @@ function _entityspice_entity_page($etype, array $overrides = []) {
         'type' => check_plain($e_type->name),
       ];
 
-      if ($has_revision) {
+      if ($info->hasRevision()) {
         $rows[$id]['updated'] = format_date($entity->updated, 'short');
       }
 

@@ -235,6 +235,8 @@ function _entityspice_entity_info($etype) {
  *
  * Also used to filter entity list pages.
  *
+ * TODO too damn complex.
+ *
  * @param string $entity_type
  *   Entity type to filter by.
  * @param array $header
@@ -253,8 +255,6 @@ function _entityspice_entity_info($etype) {
  * @throws \Exception
  */
 function _entityspice_filter_query($entity_type, $header, $bundle = '', $properties = [], $fields = [], $items_page = 10) {
-  $has_revision = _entityspice_get_info($entity_type)['has_revision'];
-
   $query = new EntityFieldQuery();
 
   $query
@@ -262,39 +262,36 @@ function _entityspice_filter_query($entity_type, $header, $bundle = '', $propert
     ->tablesort($header)
     ->pager($items_page);
 
-  if (!empty($bundle) && $has_revision) {
+  if (!empty($bundle)) {
     $query->entityCondition('bundle', $bundle, '=');
   }
 
   // Add property filters.
   foreach ($properties as $key => $value) {
     $property_info = entity_get_all_property_info($entity_type);
-    if ($value != '') {
-      // Processing for date ranges.
-      if ($property_info[$key]['type'] == 'date') {
-        if ($value['from'] != '') {
-          $conditions = [
-            strtotime($value['from']),
-            // Add 24 hours for full day search.
-            strtotime($value['to']) + 86400,
-          ];
-          $query->propertyCondition($key, $conditions, 'BETWEEN');
-        }
+    // Processing for date ranges.
+    if ($property_info[$key]['type'] == 'date') {
+      if ($value['from'] != '') {
+        $conditions = [
+          strtotime($value['from']),
+          // Add 24 hours for full day search.
+          strtotime($value['to']) + 86400,
+        ];
+        $query->propertyCondition($key, $conditions, 'BETWEEN');
       }
-      else {
-        // NULL operator will allow literal or array for $value.
-        $operator = NULL;
-        if (isset($property_info[$key]['filter_operator']) && !is_array($value)) {
-          $operator = $property_info[$key]['filter_operator'];
-        }
-        $query->propertyCondition($key, $value, $operator);
+    }
+    else {
+      // NULL operator will allow literal or array for $value.
+      $operator = NULL;
+      if (isset($property_info[$key]['filter_operator']) && !is_array($value)) {
+        $operator = $property_info[$key]['filter_operator'];
       }
+      $query->propertyCondition($key, $value, $operator);
     }
   }
   // Add field filters.
   foreach ($fields as $key => $field) {
     $field_info = field_info_field($key);
-
     switch ($field_info['type']) {
       // Special handling for date fields, which have a two-value range.
       case 'date':
@@ -340,176 +337,170 @@ function _entityspice_filter_query($entity_type, $header, $bundle = '', $propert
  * @param string $etype
  *   Machine name of entity type, Will be name of base table.
  *
- * @param array $additional_fields
- * @param array $overrides
- *
- * @return mixed
+ * @return array entity schema
  */
-function _entityspice_entity_schema($etype, array $additional_fields = [], array $overrides = []) {
-  $info = _entityspice_get_info_override($etype, $overrides);
+function _entityspice_entity_schema($etype) {
+  $info = _entityspice_get_info($etype);
 
-  $idKey = $info['idkey'];
-  $revision_key = $info['ridkey'];
-  $revision_table = $info['revision table'];;
-  $bundle_idkey = $info['bundle_id_key'];
-  $bundle_table = $info['bundle table'];
-  $bundle_key = $info['bundle key name'];
-  $base_table = $info['base table'];
+  $revision_table = $info->revisionTable();
+  $base_table = $info->baseTable();
 
   $schema[$base_table] = [
-    'description' => "The base table for $etype entity.",
-    'primary key' => [$idKey],
+    'description' => "the base table for $etype entity",
+    'primary key' => [$info->idKey()],
   ];
 
-  $schema[$base_table]['fields'] = $additional_fields + [
-      $idKey => [
-        'description' => 'Primary key of the entity.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-
-      'uid' => [
-        'description' => 'Owner of the entity.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ],
-
-      'created' => [
-        'description' => 'The Unix timestamp of the entity creation time.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ],
-    ];
-
-  if ($info['has_title']) {
-    $schema[$base_table]['fields']['title'] = [
+  $schema[$base_table]['fields'] = [
+    $info->idKey() => [
+      'description' => 'primary key of the entity',
+      'type' => 'serial',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ],
+    $info->uidKey() => [
+      'description' => 'owner of the entity',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ],
+    'created' => [
+      'description' => 'the Unix timestamp of the entity creation time',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'updated' => [
+      'description' => 'The Unix timestamp when the entity was updated',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'title' => [
       'description' => 'Title',
       'type' => 'varchar',
       'length' => '255',
       'not null' => TRUE,
       'default' => '',
-    ];
+    ],
+  ];
+  if (!$info->hasUid()) {
+    unset($schema[$base_table]['fields'][$info->uidKey()]);
+  }
+  if (!$info->hasCreated()) {
+    unset($schema[$base_table]['fields']['created']);
+  }
+  if (!$info->hasUpdated()) {
+    unset($schema[$base_table]['fields']['updated']);
+  }
+  if (!$info->hasTitle()) {
+    unset($schema[$base_table]['fields']['title']);
   }
 
-  if ($info['has_revision']) {
-    $schema[$base_table]['fields']['updated'] = [
-      'description' => 'The Unix timestamp when the entity was most recently saved.',
-      'type' => 'int',
-      'not null' => TRUE,
-      'default' => 0,
-    ];
-
-    $schema[$base_table]['fields'][$revision_key] = [
-      'description' => 'The primary identifier for version.',
+  if ($info->hasRevision()) {
+    $schema[$base_table]['fields'][$info->ridKey()] = [
+      'description' => 'the primary identifier for version',
       'type' => 'int',
       'unsigned' => TRUE,
       'not null' => FALSE,
     ];
 
     $schema[$revision_table] = $schema[$base_table];
-
-    $schema[$revision_table]['description'] = "Stores information about each saved version of a $etype.";
-    $schema[$revision_table]['primary key'] = [$revision_key];
-
-    $schema[$revision_table]['fields'][$idKey]['type'] = 'int';
-    $schema[$revision_table]['fields'][$revision_key]['type'] = 'serial';
+    $schema[$revision_table]['description'] = "stores information about each saved version of a $etype";
+    $schema[$revision_table]['primary key'] = [$info->ridKey()];
+    $schema[$revision_table]['fields'][$info->idKey()]['type'] = 'int';
+    $schema[$revision_table]['fields'][$info->ridKey()]['type'] = 'serial';
     $schema[$revision_table]['fields']['log'] = [
-      'description' => 'The log entry explaining the changes in this version.',
+      'description' => 'the log entry explaining the changes in this version',
       'type' => 'text',
       'not null' => FALSE,
       'size' => 'big',
     ];
+
+    if (!$info->hasUpdated()) {
+      unset($schema[$base_table]['fields']['updated']);
+    }
+    if (!$info->hasRevisionLog()) {
+      unset($schema[$revision_table]['fields']['log']);
+    }
   }
 
-  if ($info['has bundle']) {
-    $schema[$base_table]['fields'][$bundle_key] = [
-      'description' => 'The bundle type',
+  if ($info->hasBundle()) {
+    $schema[$base_table]['fields'][$info->bundleKeyName()] = [
+      'description' => 'the bundle type',
       'type' => 'text',
-      'size' => 'medium',
-      'not null' => TRUE,
+      'size' => 'small',
+      'not NULL' => TRUE,
+    ];
+    $schema[$revision_table]['fields'][$info->bundleKeyName()] = [
+      'description' => 'the bundle type',
+      'type' => 'text',
+      'size' => 'small',
+      'not NULL' => TRUE,
     ];
 
-    $schema[$revision_table]['fields'][$bundle_key] = [
-      'description' => 'The bundle type',
-      'type' => 'text',
-      'size' => 'medium',
-      'not null' => TRUE,
-    ];
-
-    $schema[$bundle_table] = [
-      'description' => "Stores information about all defined $etype bundles.",
+    $schema[$info->bundleTable()] = [
+      'description' => "stores information about all defined $etype bundles",
       'fields' => [
-        $bundle_idkey => [
-          'type' => 'serial',
-          'not null' => TRUE,
-          'description' => 'Primary Key: Unique bundle ID.',
-        ],
-
         'name' => [
-          'description' => 'The machine-readable name of entity bundle.',
-          'type' => 'varchar',
-          'length' => 32,
-          'not null' => TRUE,
+          'description' => 'machine readable name of entity bundle',
+          'type' => 'tiny',
+          'not NULL' => TRUE,
         ],
-
         'label' => [
-          'description' => 'The human-readable name of this entity bundle.',
-          'type' => 'varchar',
-          'length' => 255,
-          'not null' => TRUE,
+          'description' => 'human readable name of bundle',
+          'type' => 'tiny',
+          'not NULL' => TRUE,
           'default' => '',
         ],
-
         'weight' => [
           'type' => 'int',
-          'not null' => TRUE,
+          'not NULL' => TRUE,
           'default' => 0,
           'size' => 'tiny',
-          'description' => 'The weight of this bundle in relation to others.',
+          'description' => 'weight of bundle in relation to others',
         ],
-
         'locked' => [
-          'description' => 'A boolean indicating whether the administrator may delete this type.',
+          'description' => 'boolean flag indicating whether the administrator may delete the bundle',
           'type' => 'int',
-          'not null' => TRUE,
+          'not NULL' => TRUE,
           'default' => 0,
           'size' => 'tiny',
         ],
-
         'data' => [
           'type' => 'text',
-          'not null' => FALSE,
-          'size' => 'big',
+          'not NULL' => FALSE,
+          'size' => 'varchar',
           'serialize' => TRUE,
-          'description' => 'A serialized array of additional data related to this bundle.',
+          'description' => 'serialized array of additional data related to the bundle',
           'merge' => TRUE,
         ],
-
-        'status' => [
+        'export_status' => [
           'type' => 'int',
-          'not null' => TRUE,
-          // Set the default to ENTITY_CUSTOM without using the constant as it is
-          // not safe to use it at this point.
-          'default' => 0x01,
+          'not NULL' => TRUE,
+          'default' => 1,
           'size' => 'tiny',
-          'description' => 'The exportable status of the entity.',
+          'description' => 'exportable status of the bundle',
         ],
-
         'module' => [
-          'description' => 'The name of the providing module if the entity has been defined in code.',
-          'type' => 'varchar',
-          'length' => 255,
-          'not null' => FALSE,
+          'description' => 'name of the providing module if the entity has been defined in code',
+          'type' => 'tiny',
+          'not NULL' => FALSE,
         ],
       ],
-
-      'primary key' => [$bundle_idkey],
-
+      'primary key' => [$info->bundleIdKey()],
       'unique keys' => ['name' => ['name']],
     ];
+
+    if ($info->bundleIdKey() !== 'name') {
+      $schema[$info->bundleTable()]['fields'][$info->bundleIdKey()] = [
+        'type' => 'serial',
+        'not NULL' => TRUE,
+        'description' => 'unique bundle ID',
+      ];
+    }
+    else {
+      $schema[$info->bundleTable()]['fields'][$info->bundleIdKey()]['type'] = 'serial';
+    }
   }
 
   return $schema;
@@ -521,37 +512,47 @@ function _entityspice_entity_schema($etype, array $additional_fields = [], array
  * Checks entity access for various operations.
  *
  * @param string $etype entity type.
- * @param string $op The operation being performed. One of 'view',
- *   'update', 'create', 'delete' or 'archive'.
- * @param entity $entity entity to check access for, or for the create
- *   operation, the entity bundle. If nothing is given access permissions for
- *   all entities of given type are returned.
+ * @param string $op The operation being performed. Such as view, update, ...
+ * @param string/null $bundle
+ * @param object/null $entity
+ * @param object/int/null $user user with uid, or the uid, or null for current
+ *   user.
  *
  * @return bool
  */
-function _entityspice_entity_access($etype, $op, $entity = NULL, $user = NULL) {
-  $account = $user ? $user : $GLOBALS['user'];
-  $self = $entity && isset($entity->uid) ? ($entity->uid == $account->uid) : FALSE;
-  $hasType = isset($entity) && is_string($entity);
-
-  if (user_access("administer $etype", $account)) {
-    return TRUE;
+function _entityspice_entity_access($etype, $op, $bundle = NULL, $entity = NULL, $user = NULL) {
+  if ($user !== NULL && is_object($user)) {
+    $account = $user->uid;
+  }
+  elseif ($user !== NULL && ctype_digit($user)) {
+    $account = $user;
+  }
+  elseif ($user === NULL) {
+    $account = $GLOBALS['user'];
+  }
+  else {
+    throw new RuntimeException();
   }
 
-  switch ($op) {
-    case 'edit':
-      return ($self && user_access("edit own $etype", $account))
-        || user_access("manage $etype", $account);
-    case 'view':
-      return ($self && user_access("view own $etype", $account))
-        || user_access("access $etype", $account);
-    case 'create':
-      return user_access("manage $etype", $account) ||
-        ($hasType && user_access("create $entity $etype", $account));
-    case 'delete':
-      return user_access("manage $etype", $account);
-    case 'archive':
-      return user_access("manage $etype", $account);
+  $info = _entityspice_get_info($etype);
+  if (!in_array($op, $info->accessControlledActions())) {
+    return FALSE;
+  }
+
+  $self = $entity !== NULL && $info->hasUid() && isset($entity->{$info->uidKey()})
+    ? ($entity->{$info->uidKey()} == $account->uid) : FALSE;
+
+  if ($self && $bundle !== NULL && user_access("own - $etype - $bundle - $op", $account)) {
+    return TRUE;
+  }
+  if ($self && user_access("own - $etype - $op", $account)) {
+    return TRUE;
+  }
+  if ($bundle !== NULL && user_access("$etype - $bundle - $op")) {
+    return TRUE;
+  }
+  if (user_access("$etype - $op")) {
+    return TRUE;
   }
 
   return FALSE;
@@ -561,7 +562,7 @@ function _entityspice_entity_access($etype, $op, $entity = NULL, $user = NULL) {
  * Access callback for the entity API.
  */
 function _entityspice_entity_bundle_access($etype, $op, $bundle = NULL, $account = NULL) {
-  return user_access("administer $etype bundles", $account);
+  throw new RuntimeException("");
 }
 
 /**

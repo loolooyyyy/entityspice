@@ -10,3 +10,7 @@ override title property key name and label.
 function entityspice_admin_menu_output_alter(&$content)
 
 say about devel
+
+say about bad confusting names: type, bundle, entity, revision...
+
+say why bundle fieldable -> as config;
