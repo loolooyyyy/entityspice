@@ -1,16 +1,5 @@
 <?php
 
-// ______________________________________________________________________ DEVEL
-
-/**
- * Page callback: wrapper for devel_load_object.
- *
- * @param $etype string entity type.
- * @param $object object entity object.
- * @param string $name name shown when displaying entity.
- *
- * @return string|void
- */
 // _______________________________________________________________________ MENU
 
 /**
@@ -22,34 +11,29 @@
  * @throws \Exception
  */
 function _entityspice_entity_menu_items($etype) {
-  $info = _entityspice_get_info($etype);
+  $sinfo = _entityspice_get_info($etype);
+  $einfo = entity_get_info($etype);
 
-  $label = $info['label'];
-  $parent_path_u = $info['parent userland path'];
+  $root = $sinfo->parentUserlandPath();
 
-  $edit_form = $info['edit form'];
-  $delete_form = $info['delete form'];
-
-  $items[$parent_path_u] = [
-    'title' => $label,
-    'description' => 'View ' . $label . 's',
+  $items[$root] = [
+    'title' => $sinfo->humanName(),
+    'description' => 'View ' . $sinfo->humanName() . 's',
     'page callback' => '_entityspice_entity_page',
     'page arguments' => [$etype],
     'access arguments' => ["administer $etype"],
   ];
-
-  $items[$parent_path_u . '/add'] = [
-    'title' => 'Add a ' . $label,
-    'description' => 'Add a new ' . $label,
+  $items[$root . '/add'] = [
+    'title' => 'Add a ' . $sinfo->humanName(),
+    'description' => 'Add a new ' . $sinfo->humanName(),
     'page callback' => '_entityspice_entity_bundles_list_page',
     'page arguments' => [$etype],
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => ['add ' . $etype],
   ];
 
-  $entity_info = entity_get_info($etype);
-  foreach ($entity_info['bundles'] as $bun_name => $bundle) {
-    $items[$parent_path_u . '/add/' . $bun_name] = [
+  foreach ($einfo['bundles'] as $bun_name => $bundle) {
+    $items[$root . '/add/' . $bun_name] = [
       'title' => $bundle['label'],
       'title callback' => 'check_plain',
       'description' => isset($bundle['description']) ? $bundle['description'] : '',
@@ -59,10 +43,10 @@ function _entityspice_entity_menu_items($etype) {
     ];
   }
 
-  $arg_no = $info['parent user path arg no'];
+  $arg_no = $sinfo['parent user path arg no'];
   $access_cbk = $etype . '_entity_access';
 
-  $items[$parent_path_u . '/%'] = [
+  $items[$root . '/%'] = [
     'title callback' => '_entityspice_entity_title',
     'title arguments' => [$etype, $arg_no],
     'page callback' => '_entityspice_entity_view',
@@ -71,7 +55,7 @@ function _entityspice_entity_menu_items($etype) {
     'access callback' => $access_cbk,
     'access arguments' => ['view', $arg_no],
   ];
-  $items[$parent_path_u . '/%/view'] = [
+  $items[$root . '/%/view'] = [
     'title' => 'Summary',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
@@ -79,19 +63,19 @@ function _entityspice_entity_menu_items($etype) {
     'access callback' => $access_cbk,
     'access arguments' => ['view', $arg_no],
   ];
-  $items[$parent_path_u . '/%/view/edit'] = [
+  $items[$root . '/%/view/edit'] = [
     'title' => 'Edit',
     'page callback' => 'drupal_get_form',
-    'page arguments' => [$edit_form, $arg_no],
+    'page arguments' => [$sinfo->editForm(), $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
     'access callback' => $access_cbk,
     'access arguments' => ['edit', $arg_no],
   ];
-  $items[$parent_path_u . '/%/view/delete'] = [
+  $items[$root . '/%/view/delete'] = [
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
-    'page arguments' => [$delete_form, $arg_no],
+    'page arguments' => [$sinfo->deleteForm(), $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
     'access callback' => $access_cbk,
@@ -99,7 +83,7 @@ function _entityspice_entity_menu_items($etype) {
   ];
 
   if (module_exists('devel')) {
-    $items[$parent_path_u . '/%/devel'] = [
+    $items[$root . '/%/devel'] = [
       'title' => 'Devel',
       'page callback' => '_entityspice_devel_load_object',
       'file' => 'inc/dev_datahandler.class.inc',
@@ -108,12 +92,12 @@ function _entityspice_entity_menu_items($etype) {
       'weight' => 100,
       'access arguments' => ['access devel information'],
     ];
-    $items[$parent_path_u . '/%/devel/load'] = [
+    $items[$root . '/%/devel/load'] = [
       'title' => 'Load',
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'access arguments' => ['access devel information'],
     ];
-    $items[$parent_path_u . '/%/devel/render'] = [
+    $items[$root . '/%/devel/render'] = [
       'title' => 'Render',
       'page callback' => '_entityspice_devel_render_object',
       'file' => 'inc/dev_datahandler.class.inc',
@@ -512,6 +496,7 @@ function theme_entityspice_entity_list($variables) {
  *   - entity_types: An array of entity types.
  *
  * @ingroup themeable
+ * @return string
  */
 function theme_entityspice_default_page($variables) {
   $content = $variables['content'];

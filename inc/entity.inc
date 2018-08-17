@@ -1,55 +1,35 @@
 <?php
 
 /**
- * Implements hook_entity_info_alter().
+ * Helper function to load entity if it's ID is passed.
  *
- * We are adding the info about the entity bundles via a hook to avoid a
- * recursion issue as loading the model types requires the entity info as well.
+ * @param string $etype machine name of entity type.
+ * @param int/object $entity entity object itself or id of it.
+ *
+ * @return entity Loaded entity.
  */
-function _entityspice_entity_info_alter($etype, &$entity_info) {
-  // @TODO make sure $etype is actually the path in $base_path.
-  // @todo: Testing to ensure the schema exists; needed because running gui
-  // install profile was hitting this BEFORE the schema was installed.
-  if (drupal_get_schema($etype)) {
-    $i = _entityspice_get_info($etype);
-    $base_path = $i['_entityspice_entity_info_alter']['path'];
-    $real_path = $i['_entityspice_entity_info_alter']['real path base'];
-
-    foreach (_entityspice_entity_get_bundles($etype) as $bundle => $info) {
-      $entity_info[$etype]['bundles'][$bundle] = [
-        'label' => $info->label,
-        'admin' => [
-          'path' => $base_path,
-          'real path' => $real_path . '/' . "$bundle",
-          'bundle argument' => $i['_entityspice_entity_info_alter']['bundle argument'],
-          'access arguments' => ["administer $etype bundles"],
-        ],
-      ];
-    }
+function _entityspice_get_entity($etype, $entity) {
+  if (!is_object($entity)) {
+    $entity = _entityspice_entity_load($etype, $entity);
   }
+  return is_object($entity) ? $entity : NULL;
 }
 
-/**
- * Title callback, returns title of entity.
- */
-function _entityspice_entity_title($etype, $entity, $check_plain = TRUE) {
-  if (!_entityspice_get_info($etype)['has_title']) {
-    throw new EntitySpiceOperationNotSupported("entity type [$etype] does not have a title property");
-  }
-  if ($entity = _entityspice_get_entity($etype, $entity)) {
-    $label = _entityspice_get_entity($etype, $entity)->label();
-    return $check_plain ? check_plain($label) : $entity->label();
-  }
-}
 
 /**
  * Implements hook_field_extra_field_info().
  *
  * Needs bundle support on entity type.
+ *
+ * @param $etype
+ * @param array $form
+ * @param array $display
+ *
+ * @return array
  */
 function _entityspice_field_extra_field_info($etype, array $form = [], array $display = []) {
+  // TODO
   $extra = [];
-
   if (_entityspice_get_info($etype)['has_title']) {
     foreach (_entityspice_entity_get_bundles($etype) as $bundle => $info) {
       $extra[$etype][$bundle] = [
@@ -69,48 +49,41 @@ function _entityspice_field_extra_field_info($etype, array $form = [], array $di
       ];
     }
   }
-
   return $extra;
 }
 
-/**
- * Helper function to load entity if it's ID is passed.
- *
- * @param string $etype
- *   machine name of entity type.
- * @param int/object $entity
- *   Entity object itself or id of it.
- *
- * @return entity
- *   Loaded entity.
- */
-function _entityspice_get_entity($etype, $entity) {
-  if (!is_object($entity)) {
-    $entity = _entityspice_entity_load($etype, $entity);
-  }
-
-  return is_object($entity) ? $entity : NULL;
-}
 
 /**
- * Gets an array of all entity types, keyed by the name.
+ * Gets an array of all bundles, keyed by the name.
  *
- * @param string $name
- *   If set, the bundle with the given name is returned.
+ * @param string $etype entity type.
+ * @param string $name if set, the bundle with the given name is returned.
  *
  * @return array|mixed
- * @throws \EntitySpiceOperationNotSupported
  */
-function _entityspice_entity_get_bundles($etype, $name = NULL) {
+function _entityspice_entity_get_bundle($etype, $name) {
   if (!_entityspice_get_info($etype)) {
     throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
   }
+  $bundle_name = _entityspice_get_info($etype)->bundleMachineName();
+  $bundles = entity_load_multiple_by_name($bundle_name, [$name]);
+  return reset($bundles);
+}
 
-  $bundle_name = _entityspice_get_info($etype)['bundle_machine_name'];
-  $bundles =
-    entity_load_multiple_by_name($bundle_name, $name ? [$name] : FALSE);
-
-  return $name ? reset($bundles) : $bundles;
+/**
+ * Gets an array of all bundles, keyed by the name.
+ *
+ * @param string $etype entity type.
+ *
+ * @return array|mixed
+ */
+function _entityspice_entity_get_bundles($etype) {
+  if (!_entityspice_get_info($etype)) {
+    throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
+  }
+  $bundle_name = _entityspice_get_info($etype)->bundleMachineName();
+  $bundles = entity_load_multiple_by_name($bundle_name);
+  return $bundles;
 }
 
 /**
@@ -133,9 +106,7 @@ function _entityspice_entity_get_bundles_names($etype, $with_label = TRUE, $chec
   if (!_entityspice_get_info($etype)) {
     throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
   }
-
   $bundles = _entityspice_entity_get_bundles($etype);
-
   if ($with_label) {
     $ret = [];
     foreach ($bundles as $bundle => $info) {
@@ -145,7 +116,6 @@ function _entityspice_entity_get_bundles_names($etype, $with_label = TRUE, $chec
   else {
     $ret = array_keys($bundles);
   }
-
   return $ret;
 }
 
@@ -157,72 +127,76 @@ function _entityspice_entity_get_bundles_names($etype, $with_label = TRUE, $chec
  * @return mixed
  */
 function _entityspice_entity_info($etype) {
-  // TODO
-  // entity label mistaken for title property here
-
+  // entity_label() will suffice.
 
   $info = _entityspice_get_info($etype);
 
   $ret_info[$etype] = [
-    'label' => $info->label(),
+    'module' => $info->module(),
+    'label' => $info->humanName(),
     'controller class' => $info->controllerClass(),
-    'metadata controller class' => $info->metadataControllerClass(),
-    'entity class' => $info->entityClass(),
-    'views controller class' => $info->viewsControllerClass(),
     'base table' => $info->baseTable(),
+    'revision table' => $info->revisionTable(),
+    'uri callback' => $info->uriCallback(),
     'fieldable' => $info->isFieldable(),
     'entity keys' => [
       'id' => $info->idKey(),
+      'revision' => $info->revisionKeyName(),
       'bundle' => $info->bundleKeyName(),
-      'label' => $info->label(),
+      'label' => $info->titleKey(),
     ],
-    'bundle keys' => [
-      'bundle' => $info->bundleKeyName(),
-    ],
-    'bundles' => [],
-    'view modes' => [
+    //    'bundle keys' => [ // TODO
+    //      'bundle' => $info->bundleKeyName(),
+    //    ],
+    'bundles' => [], // TODO
+    'view modes' => [ // TODO
       'full' => [
         'label' => t('Full'),
         'custom settings' => FALSE,
       ],
     ],
-    'uri callback' => 'entity_class_uri',
+    'metadata controller class' => $info->metadataControllerClass(),
+    'entity class' => $info->entityClass(),
+    'views controller class' => $info->viewsControllerClass(),
     'token type' => $etype,
-    'module' => $info->module(),
-    'label callback' => 'entity_class_label',
     'access callback' => $info->accessCallback(),
   ];
-  if ($info->hasBundle()) {
-    $ret_info[$info->bundleMachineName()] = [
-      'label' => $info->label() . ' Bundle',
-      'entity class' => $info->bundleClass(),
-      'controller class' => $info->bundleControllerClass(),
-      'base table' => $info->bundleTable(),
-      'fieldable' => $info->isBundleFieldable(),
-      'bundle of' => $etype,
-      'exportable' => TRUE,
-      'token type' => $info->bundleMachineName(),
-      'entity keys' => [
-        'id' => $info->bundleIdKey(),
-        'name' => 'name',
-        'label' => 'label',
-      ],
-      'access callback' => $info->bundleAccessCallback(),
-      'module' => $info->module(),
-      'admin ui' => [
-        'path' => $info->parentAdminPath(),
-        //         'file' => $file,
-        //         'file path' => $file_path,
-        'controller class' => $info->bundleUIControllerClass(),
-      ],
-    ];
+  $ret_info[$info->bundleMachineName()] = [
+    'label' => $info->humanName() . ' Bundle',
+    'entity class' => $info->bundleClass(),
+    'controller class' => $info->bundleControllerClass(),
+    'base table' => $info->bundleTable(),
+    'fieldable' => $info->isBundleFieldable(),
+    'bundle of' => $etype,
+    'exportable' => TRUE,
+    'token type' => $info->bundleMachineName(),
+    'entity keys' => [
+      'id' => $info->bundleIdKey(),
+      'name' => 'name',
+      'label' => 'label',
+    ],
+    'access callback' => $info->bundleAccessCallback(),
+    'module' => $info->module(),
+    'admin ui' => [
+      'path' => $info->parentAdminPath(),
+      'controller class' => $info->bundleUIControllerClass(),
+      'file' => $info->bundleAdminFile(),
+      //         'file path' => $file_path,
+    ],
+  ];
+
+  if (!$info->hasBundleAdminFile()) {
+    unset($ret_info[$info->bundleMachineName()]['admin ui']['file']);
   }
-  if ($info->hasRevision()) {
-    $ret_info[$etype]['revision table'] = $info->revisionTable();
-    $ret_info[$etype]['entity keys']['revision'] = $info->ridKey();
+  if (!$info->hasBundle()) {
+    unset($ret_info[$info->bundleMachineName()]);
   }
-  if ($info->hasTitle()) {
-    $ret_info[$etype]['entity keys']['label'] = $info->label();
+  if (!$info->hasRevision()) {
+    unset($ret_info[$etype]['revision table']);
+    unset($ret_info[$etype]['entity keys']['revision']);
+  }
+  if (!$info->hasTitle()) {
+    unset($ret_info[$etype]['entity keys']['label']);
   }
 
   return $ret_info;

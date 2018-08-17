@@ -25,7 +25,7 @@ function _entityspice_bundle_create($etype, array $values = []) {
  *   An entity bundle array or FALSE if $bundle does not exist.
  */
 function _entityspice_bundle_load($etype, $name) {
-  return _entityspice_entity_get_bundles($etype, $name);
+  return _entityspice_entity_get_bundle($etype, $name);
 }
 
 /**
@@ -38,7 +38,7 @@ function _entityspice_bundle_load($etype, $name) {
  *
  * @return \entity the $bundle argument.
  */
-function _entityspice_bundle_delete($etype, $bundle) {
+function _entityspice_bundle_delete($bundle) {
   $bundle->delete();
   menu_rebuild();
   return $bundle;
@@ -127,11 +127,11 @@ function _entityspice_entity_delete_multiple($etype, array $ids) {
 /**
  * Saves an entity.
  *
- * @param \Entity $entity The full entity object to save.
+ * @param object $entity the entity object to save.
  *
- * @return \Entity The saved entity object.
+ * @return object
  */
-function _entityspice_entity_save(object $entity) {
+function _entityspice_entity_save($entity) {
   $entity->save();
   return $entity;
 }
@@ -167,4 +167,5 @@ function _entityspice_entity_view($etype, $entity, $view_mode = 'full', $not_fou
   elseif ($not_found) {
     drupal_not_found();
   }
+  return NULL;
 }
