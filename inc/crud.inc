@@ -3,24 +3,23 @@
 // _____________________________________________________________________ BUNDLE
 
 /**
- * Deletes a bundle from the db.
+ * Create a new bundle object.
  *
- * @param entity $bundle
- *   The entity representing the bundle.
+ * @param string $etype type of bundle to create.
+ * @param array $values
+ *   Associative array of values. At least include ['type' => $type].
  *
- * @return \entity
+ * @return \Entity created bundle.
  */
-function _entityspice_bundle_delete($etype, $bundle) {
-  $bundle->delete();
-  menu_rebuild();
-  return $bundle;
+function _entityspice_bundle_create($etype, array $values = []) {
+  return _entityspice_entity_create($etype, $values);
 }
 
 /**
  * Load a entity bundle by string.
  *
- * @param string $bundle
- *   The machine-readable name of an entity bundle to load.
+ * @param string $etype entity type the requested bundle belongs to.
+ * @param string $name The machine-readable name of a bundle to load.
  *
  * @return array.
  *   An entity bundle array or FALSE if $bundle does not exist.
@@ -30,7 +29,27 @@ function _entityspice_bundle_load($etype, $name) {
 }
 
 /**
- * Saves a model type to the db.
+ * Deletes a bundle of an entity type.
+ *
+ * TODO make it conform to entity delete _entityspice_entity_delete
+ *
+ * @param entity $bundle
+ *   The entity representing the bundle.
+ *
+ * @return \entity the $bundle argument.
+ */
+function _entityspice_bundle_delete($etype, $bundle) {
+  $bundle->delete();
+  menu_rebuild();
+  return $bundle;
+}
+
+/**
+ * Saves a bundle to the db.
+ *
+ * @param entity $bundle the bundle to delete.
+ *
+ * @return entity the $bundle argument itself.
  */
 function _entityspice_bundle_save($bundle) {
   $bundle->save();
@@ -43,44 +62,41 @@ function _entityspice_bundle_save($bundle) {
 /**
  * Create a new entity object.
  *
+ * @param string $etype type of entity to create.
  * @param array $values
  *   Associative array of values. At least include ['type' => $type].
  *
  * @return \Entity created entity.
  */
 function _entityspice_entity_create($etype, array $values = []) {
-  /** @noinspection PhpUndefinedMethodInspection */
   return entity_get_controller($etype)->create($values);
 }
 
 /**
  * Loads an entity by ID.
+ *
+ * @param string $etype type of entity being loaded.
+ * @param mixed $id integer id (or any other type) uniquely identifying an
+ *   entity.
+ *
+ * @return \Entity the loaded entity or NULL if nothing was loaded.
  */
 function _entityspice_entity_load($etype, $id) {
-  if (empty($id)) {
-    return NULL;
-  }
-  $entities = _entityspice_entity_load_multiple($etype, [$id]);
-  return $entities ? reset($entities) : FALSE;
+  $load = entity_load($etype, [$id]);
+  return isset($load[$id]) ? $load[$id] : NULL;
 }
 
 /**
- * Loads multiple entities by ID or based on a set of matching conditions.
- *
- * @param string $etype entity type
- * @param array $ids
- * @param array $conditions An array of conditions on the {entity_type} table
- *   in the form  'field' => $value.
- * @param bool $reset Whether to reset the internal entity loading cache.
- *
- * @return array An array of entity objects indexed by entity_id.
- *
  * @see entity_load()
+ *
+ * @param $etype
+ * @param bool $ids
+ * @param array $conditions
+ * @param bool $reset
+ *
+ * @return mixed
  */
-function _entityspice_entity_load_multiple($etype, array $ids = [], array $conditions = [], $reset = FALSE) {
-  if (empty($ids) && empty($conditions)) {
-    return [];
-  }
+function _entityspice_entity_load_multiple($etype, $ids = FALSE, array $conditions = [], $reset = FALSE) {
   return entity_load($etype, $ids, $conditions, $reset);
 }
 
@@ -88,7 +104,7 @@ function _entityspice_entity_load_multiple($etype, array $ids = [], array $condi
  * Deletes an entity by ID.
  *
  * @param string $etype entity type.
- * @param int $ids id of the entity to delete.
+ * @param mixed $id
  *
  * @return bool TRUE on success, FALSE otherwise.
  */
@@ -105,7 +121,6 @@ function _entityspice_entity_delete($etype, $id) {
  * @return bool TRUE on success, FALSE otherwise.
  */
 function _entityspice_entity_delete_multiple($etype, array $ids) {
-  /** @noinspection PhpUndefinedMethodInspection */
   return entity_get_controller($etype)->delete($ids);
 }
 
@@ -116,10 +131,23 @@ function _entityspice_entity_delete_multiple($etype, array $ids) {
  *
  * @return \Entity The saved entity object.
  */
-function _entityspice_entity_save($etype, $entity) {
-  /** @noinspection PhpUndefinedMethodInspection */
+function _entityspice_entity_save(object $entity) {
   $entity->save();
   return $entity;
+}
+
+/**
+ * Save multiple entities.
+ *
+ * @param array $entities list of entity objects to save.
+ *
+ * @return array list of saved entity objects.
+ */
+function _entityspice_entity_save_multiple(array $entities) {
+  foreach ($entities as $entity) {
+    $entity->save();
+  }
+  return $entities;
 }
 
 /**
@@ -134,12 +162,9 @@ function _entityspice_entity_save($etype, $entity) {
  */
 function _entityspice_entity_view($etype, $entity, $view_mode = 'full', $not_found = TRUE) {
   if ($entity = _entityspice_get_entity($etype, $entity)) {
-    $view = $entity->view($view_mode);
+    return $entity->view($view_mode);
   }
   elseif ($not_found) {
     drupal_not_found();
-    return NULL;
   }
-  return $view;
 }
-

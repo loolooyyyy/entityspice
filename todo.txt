@@ -14,3 +14,6 @@ say about devel
 say about bad confusting names: type, bundle, entity, revision...
 
 say why bundle fieldable -> as config;
+
+
+disallow machine name: delete (etype_delete_form)

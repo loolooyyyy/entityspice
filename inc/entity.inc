@@ -7,7 +7,7 @@
  * recursion issue as loading the model types requires the entity info as well.
  */
 function _entityspice_entity_info_alter($etype, &$entity_info) {
-  // @TODO make sure ${etypes}s is actually the path in $base_path.
+  // @TODO make sure $etype is actually the path in $base_path.
   // @todo: Testing to ensure the schema exists; needed because running gui
   // install profile was hitting this BEFORE the schema was installed.
   if (drupal_get_schema($etype)) {
@@ -151,32 +151,33 @@ function _entityspice_entity_get_bundles_names($etype, $with_label = TRUE, $chec
 
 /**
  * Implements hook_entity_info().
+ *
+ * @param string $etype entity type
+ *
+ * @return mixed
  */
 function _entityspice_entity_info($etype) {
+  // TODO
+  // entity label mistaken for title property here
+
+
   $info = _entityspice_get_info($etype);
 
-  $path = $info['parent admin path'];
-  $concat_camel = $info['concat_camel'];
-  $label = $info['label'];
-  $type_idkey = $info['bundle_id_key'];
-  $bundle = $info['bundle_machine_name'];
-  $module = $info['module'];
-
   $ret_info[$etype] = [
-    'label' => $label,
-    'controller class' => $concat_camel . 'EntityController',
-    'metadata controller class' => $concat_camel . 'MetadataController',
-    'entity class' => $concat_camel,
-    'views controller class' => $concat_camel . 'ViewsController',
-    'base table' => $info['base table'],
-    'fieldable' => $info['is fieldable'],
+    'label' => $info->label(),
+    'controller class' => $info->controllerClass(),
+    'metadata controller class' => $info->metadataControllerClass(),
+    'entity class' => $info->entityClass(),
+    'views controller class' => $info->viewsControllerClass(),
+    'base table' => $info->baseTable(),
+    'fieldable' => $info->isFieldable(),
     'entity keys' => [
-      'id' => $info['idkey'],
-      'bundle' => $info['bundle key name'],
-      'label' => 'title',
+      'id' => $info->idKey(),
+      'bundle' => $info->bundleKeyName(),
+      'label' => $info->label(),
     ],
     'bundle keys' => [
-      'bundle' => 'name',
+      'bundle' => $info->bundleKeyName(),
     ],
     'bundles' => [],
     'view modes' => [
@@ -187,42 +188,41 @@ function _entityspice_entity_info($etype) {
     ],
     'uri callback' => 'entity_class_uri',
     'token type' => $etype,
-    'module' => $module,
+    'module' => $info->module(),
     'label callback' => 'entity_class_label',
-    'access callback' => $info['access callback'],
+    'access callback' => $info->accessCallback(),
   ];
-  if ($info['has_bundle']) {
-    $ret_info[$bundle] = [
-      'label' => t("$label Bundle"),
-      'entity class' => $concat_camel . 'Bundle',
-      'controller class' => $concat_camel . 'BundleController',
-      'base table' => $info['bundle table'],
-      'fieldable' => $info['is bundle fieldable'],
+  if ($info->hasBundle()) {
+    $ret_info[$info->bundleMachineName()] = [
+      'label' => $info->label() . ' Bundle',
+      'entity class' => $info->bundleClass(),
+      'controller class' => $info->bundleControllerClass(),
+      'base table' => $info->bundleTable(),
+      'fieldable' => $info->isBundleFieldable(),
       'bundle of' => $etype,
       'exportable' => TRUE,
-      'token type' => $bundle,
+      'token type' => $info->bundleMachineName(),
       'entity keys' => [
-        'id' => $type_idkey,
+        'id' => $info->bundleIdKey(),
         'name' => 'name',
         'label' => 'label',
       ],
-      'access callback' => $info['bundle access callback'],
-      'module' => $module,
+      'access callback' => $info->bundleAccessCallback(),
+      'module' => $info->module(),
       'admin ui' => [
-        'path' => $path,
+        'path' => $info->parentAdminPath(),
         //         'file' => $file,
         //         'file path' => $file_path,
-        'controller class' => $concat_camel . 'BundleUIController',
+        'controller class' => $info->bundleUIControllerClass(),
       ],
     ];
   }
-  if ($info['has_revision']) {
-    $ret_info[$etype]['revision table'] = $info['revision table'];
-    $ret_info[$etype]['entity keys']['revision'] = $info['ridkey'];
+  if ($info->hasRevision()) {
+    $ret_info[$etype]['revision table'] = $info->revisionTable();
+    $ret_info[$etype]['entity keys']['revision'] = $info->ridKey();
   }
-  if ($info['has_title']) {
-    // TODO customize
-    $ret_info[$etype]['entity keys']['label'] = 'title';
+  if ($info->hasTitle()) {
+    $ret_info[$etype]['entity keys']['label'] = $info->label();
   }
 
   return $ret_info;
@@ -334,14 +334,18 @@ function _entityspice_filter_query($entity_type, $header, $bundle = '', $propert
 /**
  * Populate database schema array for entity.
  *
+ * TODO my awesome idea for custom fields.
+ *
  * @param string $etype
  *   Machine name of entity type, Will be name of base table.
  *
+ * @param \EntitySpiceEntityConfig $info
+ *   When calling hook_schema in a modules module.install, the module's
+ *   hook_entityspice_info does not exist yet, so this must be manually passed.
+ *
  * @return array entity schema
  */
-function _entityspice_entity_schema($etype) {
-  $info = _entityspice_get_info($etype);
-
+function _entityspice_entity_schema($etype, EntitySpiceEntityConfig $info) {
   $revision_table = $info->revisionTable();
   $base_table = $info->baseTable();
 
@@ -383,6 +387,7 @@ function _entityspice_entity_schema($etype) {
       'default' => '',
     ],
   ];
+
   if (!$info->hasUid()) {
     unset($schema[$base_table]['fields'][$info->uidKey()]);
   }
@@ -395,7 +400,6 @@ function _entityspice_entity_schema($etype) {
   if (!$info->hasTitle()) {
     unset($schema[$base_table]['fields']['title']);
   }
-
   if ($info->hasRevision()) {
     $schema[$base_table]['fields'][$info->ridKey()] = [
       'description' => 'the primary identifier for version',
@@ -423,7 +427,6 @@ function _entityspice_entity_schema($etype) {
       unset($schema[$revision_table]['fields']['log']);
     }
   }
-
   if ($info->hasBundle()) {
     $schema[$base_table]['fields'][$info->bundleKeyName()] = [
       'description' => 'the bundle type',
@@ -558,50 +561,3 @@ function _entityspice_entity_access($etype, $op, $bundle = NULL, $entity = NULL,
   return FALSE;
 }
 
-/**
- * Access callback for the entity API.
- */
-function _entityspice_entity_bundle_access($etype, $op, $bundle = NULL, $account = NULL) {
-  throw new RuntimeException("");
-}
-
-/**
- * Define permissions useful for entities.
- *
- * @param string $type
- *   Entity type (machine name).
- * @param string $label
- *   Entity label (human redable).
- *
- * @return array
- *   Array of permissions related to entities.
- */
-function _entityspice_entity_permissions($type, $label) {
-  $perms = [
-    "administer $type bundles" => [
-      'title' => t("Administer $label Bundles"),
-      'description' => t("Manage $label bundles and their structure."),
-    ],
-    "administer $type" => [
-      'title' => t("Administer $type"),
-      'description' => t("Perform administration tasks for $label."),
-    ],
-    "manage $type" => [
-      'title' => t("Manage $label"),
-      'description' => t("Create, update or delete $label."),
-    ],
-    "access $type" => [
-      'title' => t("Access $label"),
-      'description' => t("View $label."),
-    ],
-    "view own $type" => [
-      'title' => t("Access Own $label"),
-      'description' => t("View own $label information."),
-    ],
-    "edit own $type" => [
-      'title' => t("Edit Own $label"),
-      'description' => t("Edit own $label information."),
-    ],
-  ];
-  return $perms;
-}

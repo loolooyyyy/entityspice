@@ -24,325 +24,9 @@ if (ENTITYSPICE_DEVELOPMENT) {
   require_once 'inc/dev_datahandler.class.inc';
 }
 
+require_once 'config.inc';
 require_once 'inc/_require.inc';
 
-
-/**
- * Configuration keys of an entity supported by entity spice.
- *
- * None of methods declared in this class or implementation should take a key,
- * and nothing other than simple values indication support for a future should
- * be returned. An implementation must be a simple immutable value class with
- * no logic. Else, it is a design error, a disaster.
- */
-interface EntitySpiceEntityConfig {
-
-  function module();
-
-  function machineName();
-
-  function camelNameLowerFirst();
-
-  function camelNameUpperFirst();
-
-  function label();
-
-  function bundleMachineName();
-
-  function bundleIdKey();
-
-  function bundleKeyName();
-
-  function idKey();
-
-  function ridKey();
-
-  function uidKey();
-
-  function titleKey();
-
-  function titleLabel();
-
-  function baseTable();
-
-  function revisionTable();
-
-  function bundleTable();
-
-  function addForm();
-
-  function editForm();
-
-  function deleteForm();
-
-  function formsFile();
-
-  function uriBase();
-
-
-  function hasTitle();
-
-  function hasUid();
-
-  function hasUpdated();
-
-  function hasCreated();
-
-  function hasRevision();
-
-  function hasRevisionLog();
-
-  function hasBundle();
-
-
-  function isFieldable();
-
-  function isBundleFieldable();
-
-
-  function hasFormsFile();
-
-  function bundleAdminFile();
-
-
-  function accessCallback();
-
-  function bundleAccessCallback();
-
-  function bundleFormSubmitDelete();
-
-  function bundleSubmitDelete();
-
-  function bundleExistsCallback();
-
-  function entityFormSubmitCallback();
-
-  function entityDeleteFormSubmitCallback();
-
-  function entityFormValidationCallback();
-
-
-  function parentAdminPath();
-
-  function parentUserlandPath();
-
-  function bundleSubmitRedirect();
-
-  function bundleDeleteRedirect();
-
-  function entityDeleteRedirect();
-
-
-  function hasInlineEntityFormSupport();
-
-  function inlineInlineEntityForm();
-
-
-  function accessControlledActions();
-
-}
-
-/**
- * Default implementation of \EntitySpiceEntityConfiguration with sane values.
- *
- * This implementation does NOT call any of subclass methods. Do NOT expect
- * behaviour of a method to change, overriding some other method.
- */
-abstract class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
-
-  private $machine_name;
-
-  private $camel_name_lower_first;
-
-  private $camel_name_upper_first;
-
-  private $label_name;
-
-  /**
-   * @param $machine_name string machine name of entity this config belongs to.
-   */
-  public function __construct($machine_name) {
-    if (empty($machine_name)
-      || !is_string($machine_name)
-      || !ctype_alnum($machine_name)
-      || ctype_digit($machine_name[0])
-      || $machine_name[0] === '_') {
-      throw new RuntimeException("bad machine name: " .
-        (is_string($machine_name) ? $machine_name : 'NON_STRING_GIVEN'));
-    }
-
-    $this->machine_name = $machine_name;
-    $this->label_name = ucwords(str_replace('_', ' ', $machine_name));
-    $this->camel_name_upper_first = str_replace(' ', '', $label_name);
-    $this->camel_name_lower_first = lcfirst($this->camel_name_upper_first);
-  }
-
-  function module() {
-    return $this->machine_name;
-  }
-
-  function machineName() {
-    return $this->machine_name;
-  }
-
-  function camelNameLowerFirst() {
-    return $this->camel_name_lower_first;
-  }
-
-  function camelNameUpperFirst() {
-    return $this->camel_name_upper_first;
-  }
-
-  function label() {
-    return $this->label_name;
-  }
-
-  function bundleMachineName() {
-    return $this->machine_name . '_bundle';
-  }
-
-  function bundleIdKey() {
-    return "bid";
-  }
-
-  function bundleKeyName() {
-    return "bid";
-  }
-
-  function idKey() {
-    return "eid";
-  }
-
-  function ridKey() {
-    return "rid";
-  }
-
-  function uidKey() {
-    return "uid";
-  }
-
-  function titleKey() {
-    return "title";
-  }
-
-  function titleLabel() {
-    return "Title";
-  }
-
-  function baseTable() {
-    return $this->machine_name;
-  }
-
-  function revisionTable() {
-    return $this->machine_name . '_revision';
-  }
-
-  function bundleTable() {
-    return $this->machine_name . '_bundle';
-  }
-
-  abstract function addForm();
-
-  abstract function editForm();
-
-  abstract function deleteForm();
-
-  abstract function formsFile();
-
-  function uriBase() {
-    return $this->camel_name_lower_first;
-  }
-
-
-  function hasTitle() {
-    return TRUE;
-  }
-
-  function hasUid() {
-    return TRUE;
-  }
-
-  function hasUpdated() {
-    return TRUE;
-  }
-
-  function hasCreated() {
-    return TRUE;
-  }
-
-  function hasRevision() {
-    return FALSE;
-  }
-
-  function hasRevisionLog() {
-    return TRUE;
-  }
-
-  function hasBundle() {
-    return TRUE;
-  }
-
-
-  function isFieldable() {
-    return TRUE;
-  }
-
-  function isBundleFieldable() {
-    return TRUE;
-  }
-
-
-  abstract function hasFormsFile();
-
-  abstract function bundleAdminFile();
-
-
-  abstract function accessCallback();
-
-  abstract function bundleAccessCallback();
-
-  abstract function bundleFormSubmitDelete();
-
-  abstract function bundleSubmitDelete();
-
-  abstract function bundleExistsCallback();
-
-  abstract function entityFormSubmitCallback();
-
-  abstract function entityDeleteFormSubmitCallback();
-
-  abstract function entityFormValidationCallback();
-
-
-  abstract function parentAdminPath();
-
-  abstract function parentUserlandPath();
-
-  abstract function bundleSubmitRedirect();
-
-  abstract function bundleDeleteRedirect();
-
-  abstract function entityDeleteRedirect();
-
-
-  function hasInlineEntityFormSupport() {
-    return TRUE;
-  }
-
-  abstract function inlineInlineEntityForm();
-
-
-  function accessControlledActions() {
-    return [
-      'administer',
-      'create',
-      'delete',
-      'view',
-      'archive',
-    ];
-  }
-
-}
 
 /**
  * Thrown when some operation is not supported by an entity type.
@@ -360,20 +44,17 @@ class EntitySpiceOperationNotSupported extends RuntimeException {
  *
  * @param string $etype
  *
- * @return object \EntitySpiceEntityConfig for $etype.
+ * @return \EntitySpiceEntityConfig for $etype.
  */
 function _entityspice_get_info($etype) {
-  if (empty($etype)) {
-    throw new RuntimeException("entity type not specified");
+  if (empty($etype) || !is_string($etype)) {
+    throw new RuntimeException('entity type must be string');
   }
 
   $info = _entityspice_get_info_all();
   if (!isset($info[$etype])) {
-    // @TODO CRITICAL
-    // @FIXME CRITICAL
-    // When calling hook_schema in  a modules module.install, module's
-    // hook_entityspice_info does not exist yet.
-    $info[$etype] = _entityspice_info_defaults($etype);
+    throw new EntitySpiceOperationNotSupported('entity type is not a entityspice entity, ' .
+      'is hook_entityspice implemented for it?');
   }
 
   return $info[$etype];
@@ -388,220 +69,59 @@ function _entityspice_get_info($etype) {
  * function expects, in you entity spice hook.
  */
 function _entityspice_get_info_all() {
-  $drupal_static_fast = &drupal_static(__FUNCTION__, ['info' => []]);
+  $drupal_static_fast = &drupal_static(__FUNCTION__, ['info' => NULL]);
   $info = &$drupal_static_fast['info'];
 
-  if (empty($info) || ENTITYSPICE_DEVELOPMENT) {
+  if ($info === NULL || ENTITYSPICE_DEVELOPMENT) {
     $info = cache_get('entityspice');
-    if (empty($info) || ENTITYSPICE_DEVELOPMENT) {
+    if (!$info || ENTITYSPICE_DEVELOPMENT) {
       $info = [];
-      $already = [];
+      $check_for_errors_on_already_defined = [];
       foreach (module_implements('entityspice_info') as $module) {
         // Get entity types defined by module.
-        $invoke = module_invoke($module, 'entityspice_info');
-        if (!is_object($invoke) || !($invoke instanceof EntitySpiceEntityConfig)) {
-          throw new RuntimeException("module [$module] did not return the required object for hook_entityspice_info");
+        $modules_entity_types = module_invoke($module, 'entityspice_info');
+        if (!is_array($modules_entity_types)) {
+          throw new RuntimeException("module [$module] did not return the required array for hook_entityspice_info");
         }
-        foreach ($invoke as $entity_type => $details) {
-          if (isset($already[$entity_type])) {
-            throw new RuntimeException(
-              'duplicate entity type definition by modules ' .
-              $module .
-              ' and ' .
-              $already[$entity_type] .
-              'for entity type [' .
-              $entity_type .
-              '], if this is on purpose, use drupal_alter for entityspice_info instead.'
-            );
+        foreach ($modules_entity_types as $entity_type => $details) {
+          // ----------------------------- BEGIN CHECKS AND HUSSELS AND FISSLES
+          if (isset($check_for_errors_on_already_defined[$entity_type])) {
+            throw new RuntimeException('duplicate entity type [' . $entity_type . '],' .
+              'by modules ' . $check_for_errors_on_already_defined[$entity_type] .
+              ' and ' . $modules_entity_types .
+              ' did you mean HOOK_entityspice_info_alter?');
           }
-          if (!is_array($details)) {
-            throw new RuntimeException(
-              'entity type [' .
-              $entity_type .
-              '] details defined by module [' .
-              $module .
-              '] is not an array.'
-            );
+          if (!is_object($details) || !($details instanceof EntitySpiceEntityConfig)) {
+            throw new RuntimeException('bad entity type definition for: ' . $entity_type);
           }
-          $already[$entity_type] = $module;
-          $info[$entity_type] = $details + _entityspice_info_defaults($entity_type);
+          $check_for_errors_on_already_defined[$entity_type] = $module;
+          // ------------------------------- END CHECKS AND HUSSELS AND FISSLES
+          $info[$entity_type] = $details;
         }
       }
       drupal_alter('entityspice_info', $info);
+      cache_set('entityspice', $info);
     }
+    $drupal_static_fast['info'] = $info;
   }
 
   return $info;
 }
 
 /**
- * Same as _entityspice_get_info() but overrides provided values in $overrides.
- *
- * Only first level array is supported.
- *
- *
- * @TODO remove this altogether.
- *
- * @TODO replace with simpler array_merge or something.
- *
- * @param string $etype
- * @param array $overrides
- *
- * @return mixed
- */
-function _entityspice_get_info_override($etype, array $overrides) {
-  $info = _entityspice_get_info($etype);
-  foreach ($overrides as $name => $value) {
-    if (is_array($value)) {
-      foreach ($value as $k => $v) {
-        $info[$name][$k] = $v;
-      }
-    }
-    else {
-      $info[$name] = $value;
-    }
-  }
-  return $info;
-}
-
-/**
- * Fill in default values for hook_entityspice_info().
- *
- * If implementing module has not provided any peace of information a default
- * value if provided here. This makes isset() all over the code unnecessary.
- *
- *
- * @TODO remove altogether.
- *
- * @param string $etype
- *
- * @return array
- */
-function _entityspice_info_defaults($etype) {
-  // TODO replace spaces
-
-  $d['module'] = $etype;
-
-  // Names.
-  $d['machine_name'] = $etype;
-  $d['concat_camel'] =
-    str_replace(' ', '', ucwords(str_replace('_', ' ', $etype)));
-  $d['label'] =
-    ucwords(str_replace('_', ' ', $etype));
-
-  // Properties and Bundles.
-  $d['bundle_machine_name'] = $etype . '_bundle';
-  // @TODO rename
-  $d['bundle_id_key'] = 'bundle_id';
-  $d['bundle key name'] = 'bundle';
-  // @TODO rename
-  $d['idkey'] = 'eid';
-  // @TODO rename.
-  $d['ridkey'] = 'reid';
-  $d['title key'] = 'title';
-  $d['title label'] = 'Title';
-
-  // Database tables.
-  $d['base table'] = $etype;
-  $d['revision table'] = $etype . '_revision';
-  $d['bundle table'] = $etype . '_bundle';
-
-  // Forms.
-  $d['add form'] = $etype . '_form';
-  $d['edit form'] = $etype . '_form';
-  $d['delete form'] = $etype . '_delete_form';
-  $d['forms file'] = [
-    // Can be '' but must be set. Final slash is needed.
-    'directory' => 'inc/',
-    'file' => "${etype}.forms",
-    'suffix' => 'inc',
-  ];
-
-  // @TODO what?
-  $d['default uri base'] = 'es/' . $etype;
-
-  // Is/Has.
-  $d['has_title'] = TRUE;
-  $d['has_uid'] = TRUE;
-  $d['has_updated'] = TRUE;
-  $d['has_created'] = TRUE;
-  $d['has_revision'] = TRUE;
-  $d['has bundle'] = TRUE;
-  $d['has forms file'] = TRUE;
-
-  $d['is fieldable'] = TRUE;
-  $d['is bundle fieldable'] = FALSE;
-
-  // Files.
-  $d['bundle admin file'] = $d['bundle_machine_name'] . '.admin.inc';
-
-  // Functions, Hooks and Callbacks.
-  $d['access callback'] = $etype . '_access';
-  $d['bundle access callback'] = $etype . '_bundle_access';
-  $d['bundle form submit delete'] = '_entityspice_entity_bundle_form_submit_delete';
-  $d['bundle submit delete'] = '_entityspice_entity_bundle_form_submit_delete';
-  $d['bundle exists callback'] = $etype . '_get_bundles';
-  $d['entity form submit callback'] = $etype . '_form_submit';
-  $d['entity delete form submit callback'] = $etype . '_delete_form_submit';
-  $d['entity form validation callback'] = $etype . '_form_validate';
-
-  // Paths.
-  $d['parent admin path'] = 'admin/structure/' . $etype;
-  $d['parent userland path'] = 'es/' . $etype;
-  // Redirected to these pages after adding/removing bundles.
-  $d['bundle submit redirect'] = $d['parent admin path'];
-  $d['bundle delete redirect'] = $d['parent admin path'];
-  $d['entity delete redirect'] = '/';
-
-  // TODO what?
-  // Various stuff needed by this function (info alter):
-  $d['_entityspice_entity_info_alter'] = [
-    'bundle argument' => 4,
-    'parent' => 'admin/structure/' . $etype,
-    'name' => $etype . '_' . $d['bundle key name'],
-    'path' => 'admin/structure/' . $etype . '/manage/%' . $etype . '_' . $d['bundle key name'],
-    'real path base' => 'admin/structure/' . $etype . '/manage',
-  ];
-
-  // This variable needed in hook_menu so that ES will know what will be the
-  // position of arg in each path. It is determined by how many words between
-  // slashes (es/mytype/% : 2) appear before the arg.
-  $d['parent user path arg no'] =
-    count(explode('/', $d['parent userland path']));
-
-  $d['has inline entity form support'] = TRUE;
-  $d['inline inline entity form']['controller'] =
-    $d['concat_camel'] . 'InlineEntityFormController';
-
-  return $d;
-}
-
-
-/**
- * @TODO code smell.
- *
  * @param $etype
  * @param $entity
- * @param array $overrides
  *
- * @return mixed
+ * @return string
  */
-function _entityspice_get_entity_name($etype, $entity, array $overrides = []) {
-  $info = _entityspice_get_info_override($etype, $overrides);
-
-  // @TODO why underscored?
-  if (isset($overrides['_name'])) {
-    return $overrides['_name'];
-  }
-  elseif ($info['has_title']) {
-    return $entity->{$info['title key']};
-  }
-  else {
-    return $entity->getID();
-  }
+function _entityspice_get_entity_name($etype, $entity) {
+  $info = _entityspice_get_info($etype);
+  return $info->hasTitle() ? $entity->{$info->titleKey()} : $entity->getId() . '';
 }
 
 // ____________________________________________________________________ UTILITY
+
+// TODO move these to admin
 
 /**
  * Given a field types, List all fields available of that field type.
