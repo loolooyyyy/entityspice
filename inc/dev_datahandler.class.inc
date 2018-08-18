@@ -251,7 +251,7 @@ function _entityspice_hook_info_page($etype = NULL) {
         'description' => 'These are default values that <b>[entityspice]</b> ' .
           'assumes for all entity types. These values will be later <b>overridden</b> ' .
           'by those <b>modules that use</b> entityspice.',
-        'value' => _entityspice_info_defaults('default'),
+        'value' => _entityspice_entity_info('default'),
       ],
     ],
     'for_entityspice' => [
@@ -301,7 +301,7 @@ function _entityspice_devel_load_object($etype, $object, $name = NULL) {
     return devel_load_object($etype, $object, $name);
   }
   else {
-    return drupal_not_found();
+    drupal_not_found();
   }
 }
 
@@ -321,7 +321,7 @@ function _entityspice_devel_render_object($etype, $object, $name = NULL) {
     return devel_render_object($etype, $object, $name);
   }
   else {
-    return drupal_not_found();
+    drupal_not_found();
   }
 }
 

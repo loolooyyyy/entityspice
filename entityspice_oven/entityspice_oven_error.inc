@@ -42,10 +42,6 @@ function _entityspice_oven_error_msg($error_no) {
         'whitespaces, and it can not begin with space.';
       break;
 
-    //    case _ENTITYSPICE_ERR_URI:
-    //      $msg = 'does not conform to URI (note that URI must not begin or end with a slash).';
-    //      break;
-
     case _ENTITYSPICE_ERR_INVALID:
       $msg = 'invalid';
       break;
@@ -55,6 +51,9 @@ function _entityspice_oven_error_msg($error_no) {
         '[A-Za-z0-9_!@#-=+:;[]{}?<>/?]';
       break;
 
+    //    case _ENTITYSPICE_ERR_URI:
+    //      $msg = 'does not conform to URI (note that URI must not begin or end with a slash).';
+    //      break;
 
     default:
       $msg = 'invalid value (unknown error code: ' . $error_no . ')';

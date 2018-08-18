@@ -445,4 +445,16 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
     return $this->camel_name_upper_first . 'BundleController';
   }
 
+  function revisionKeyName() {
+    return 'rid';
+  }
+
+  function uriCallback() {
+    throw new EntitySpiceOperationNotSupported("uriCallback");
+  }
+
+  function hasCanDeleteHook() {
+    return FALSE;
+  }
+
 }

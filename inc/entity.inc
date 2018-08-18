@@ -62,11 +62,11 @@ function _entityspice_field_extra_field_info($etype, array $form = [], array $di
  * @return array|mixed
  */
 function _entityspice_entity_get_bundle($etype, $name) {
-  if (!_entityspice_get_info($etype)) {
+  if (!_entityspice_get_info($etype)->hasBundle()) {
     throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
   }
-  $bundle_name = _entityspice_get_info($etype)->bundleMachineName();
-  $bundles = entity_load_multiple_by_name($bundle_name, [$name]);
+  $bundle_machine_name = _entityspice_get_info($etype)->bundleMachineName();
+  $bundles = entity_load_multiple_by_name($bundle_machine_name, [$name]);
   return reset($bundles);
 }
 
@@ -81,9 +81,8 @@ function _entityspice_entity_get_bundles($etype) {
   if (!_entityspice_get_info($etype)) {
     throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
   }
-  $bundle_name = _entityspice_get_info($etype)->bundleMachineName();
-  $bundles = entity_load_multiple_by_name($bundle_name);
-  return $bundles;
+  $bundle_machine_name = _entityspice_get_info($etype)->bundleMachineName();
+  return entity_load_multiple_by_name($bundle_machine_name);
 }
 
 /**
@@ -127,7 +126,7 @@ function _entityspice_entity_get_bundles_names($etype, $with_label = TRUE, $chec
  * @return mixed
  */
 function _entityspice_entity_info($etype) {
-  // entity_label() will suffice.
+  // entity_label() will suffice, thus the key not added.
 
   $info = _entityspice_get_info($etype);
 
@@ -209,7 +208,7 @@ function _entityspice_entity_info($etype) {
  *
  * Also used to filter entity list pages.
  *
- * TODO too damn complex.
+ * TODO too damn complex. WTF?
  *
  * @param string $entity_type
  *   Entity type to filter by.

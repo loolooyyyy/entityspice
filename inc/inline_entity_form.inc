@@ -17,6 +17,7 @@ abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityF
   }
 
   public function entityForm($f, &$fs) {
+    // TODO all properties
     $f = parent::entityForm($f, $fs);
     $entity = $f['#entity'];
     $info = _entityspice_get_info($this->entityType);

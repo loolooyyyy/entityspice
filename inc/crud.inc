@@ -5,6 +5,8 @@
 /**
  * Create a new bundle object.
  *
+ * TODO remove
+ *
  * @param string $etype type of bundle to create.
  * @param array $values
  *   Associative array of values. At least include ['type' => $type].
@@ -17,6 +19,8 @@ function _entityspice_bundle_create($etype, array $values = []) {
 
 /**
  * Load a entity bundle by string.
+ *
+ * TODO remove
  *
  * @param string $etype entity type the requested bundle belongs to.
  * @param string $name The machine-readable name of a bundle to load.
@@ -31,36 +35,31 @@ function _entityspice_bundle_load($etype, $name) {
 /**
  * Deletes a bundle of an entity type.
  *
- * TODO make it conform to entity delete _entityspice_entity_delete
+ * TODO remove
  *
- * @param entity $bundle
- *   The entity representing the bundle.
- *
- * @return \entity the $bundle argument.
+ * @param entity $bundle entity object representing the bundle.
  */
 function _entityspice_bundle_delete($bundle) {
   $bundle->delete();
-  menu_rebuild();
-  return $bundle;
 }
 
 /**
  * Saves a bundle to the db.
  *
- * @param entity $bundle the bundle to delete.
+ * TODO remove
  *
- * @return entity the $bundle argument itself.
+ * @param entity $bundle the bundle to delete.
  */
 function _entityspice_bundle_save($bundle) {
   $bundle->save();
-  menu_rebuild();
-  return $bundle;
 }
 
 // _____________________________________________________________________ ENTITY
 
 /**
  * Create a new entity object.
+ *
+ * TODO remove
  *
  * @param string $etype type of entity to create.
  * @param array $values
@@ -74,6 +73,8 @@ function _entityspice_entity_create($etype, array $values = []) {
 
 /**
  * Loads an entity by ID.
+ *
+ * TODO remove
  *
  * @param string $etype type of entity being loaded.
  * @param mixed $id integer id (or any other type) uniquely identifying an
@@ -89,6 +90,8 @@ function _entityspice_entity_load($etype, $id) {
 /**
  * @see entity_load()
  *
+ * TODO remove
+ *
  * @param $etype
  * @param bool $ids
  * @param array $conditions
@@ -103,6 +106,8 @@ function _entityspice_entity_load_multiple($etype, $ids = FALSE, array $conditio
 /**
  * Deletes an entity by ID.
  *
+ * TODO remove
+ *
  * @param string $etype entity type.
  * @param mixed $id
  *
@@ -114,6 +119,8 @@ function _entityspice_entity_delete($etype, $id) {
 
 /**
  * Deletes multiple entities by ID.
+ *
+ * TODO remove
  *
  * @param string $etype entity type.
  * @param array $ids An array of entity IDs to delete.
@@ -127,6 +134,8 @@ function _entityspice_entity_delete_multiple($etype, array $ids) {
 /**
  * Saves an entity.
  *
+ * TODO remove
+ *
  * @param object $entity the entity object to save.
  *
  * @return object
@@ -138,6 +147,8 @@ function _entityspice_entity_save($entity) {
 
 /**
  * Save multiple entities.
+ *
+ * TODO remove
  *
  * @param array $entities list of entity objects to save.
  *
@@ -153,18 +164,20 @@ function _entityspice_entity_save_multiple(array $entities) {
 /**
  * Display an entity.
  *
+ * @TODO remove
+ *
  * @param string $etype entity type.
  * @param \Entity $entity
  * @param string $view_mode
- * @param boolean $not_found return drupal_not_found() if $entity is not valid.
+ * @param boolean $drupal_not_found_on_not_found return drupal_not_found() if $entity is not valid.
  *
  * @return array render array.
  */
-function _entityspice_entity_view($etype, $entity, $view_mode = 'full', $not_found = TRUE) {
+function _entityspice_entity_view($etype, $entity, $view_mode = 'full', $drupal_not_found_on_not_found = TRUE) {
   if ($entity = _entityspice_get_entity($etype, $entity)) {
     return $entity->view($view_mode);
   }
-  elseif ($not_found) {
+  elseif ($drupal_not_found_on_not_found) {
     drupal_not_found();
   }
   return NULL;

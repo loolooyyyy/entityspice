@@ -45,3 +45,27 @@ function _entityspice_generate_field_list_from_bundle($etype, $bundle, $none_opt
   ksort($fields);
   return $fields;
 }
+
+/**
+ * Menu callback.
+ *
+ * Purpose: List available entity types created using ES to add a new entity.
+ *
+ * @throws \Exception
+ */
+function _entityspice_default_page() {
+  $item = menu_get_item();
+  $content = system_admin_menu_block($item);
+
+  // @TODO
+  // Bypass the entity/add listing if only one entity bundle is available.
+  // if (count($content) == 1) {
+  //  $item = array_shift($content);
+  //  drupal_goto($item['href']);
+  // }
+
+  $types = _entityspice_get_info_all();
+  $vars = ['content' => $content, 'types' => array_keys($types)];
+  return theme('entityspice_default_page', $vars);
+}
+

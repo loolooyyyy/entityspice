@@ -1,14 +1,27 @@
 <?php
 
+/**
+ * @file
+ * All methods are final. If you wish different behaviour, extend the original
+ * class yourself and implement your own logic.
+ */
+
 // TODO custom fields.
 // TODO deny delete.
 // TODO Entity default label.
 // TODO custom fields on build content.
 
-// ______________________________________________________________________ BUNDLE
+// _____________________________________________________________________ BUNDLE
 
 /**
- * The controller class for bundle entities.
+ * Bundle UI controller.
+ */
+abstract class EntitySpiceBundleEntityUIController extends EntityDefaultUIController {
+
+}
+
+/**
+ * Bundle entity controller.
  */
 abstract class EntitySpiceBundleController extends EntityAPIControllerExportable {
 
@@ -23,7 +36,7 @@ abstract class EntitySpiceBundleController extends EntityAPIControllerExportable
    *
    * @throws \Exception
    */
-  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+  final public function delete($ids, DatabaseTransaction $transaction = NULL) {
     // TODO do not allow delete if entity exists for this bundle (configurable).
     parent::delete($ids, $transaction);
     menu_rebuild();
@@ -32,43 +45,30 @@ abstract class EntitySpiceBundleController extends EntityAPIControllerExportable
 }
 
 /**
- * The class used for bundle entities.
+ * The bundle entities itself.
  */
 abstract class EntitySpiceBundleEntity extends Entity {
 
 }
 
-/**
- * Entity type UI controller.
- */
-abstract class EntitySpiceBundleEntityUIController extends EntityDefaultUIController {
-
-}
-
-// _____________________________________________________________________ CONTENT
+// _____________________________________________________________________ ENTITY
 
 /**
- * The controller class for entities.
- *
- * contains methods for the entity CRUD operations. The load method is
- * inherited from the default controller.
+ * Default entity controller class.
  */
 abstract class EntitySpiceEntityController extends EntityAPIController {
 
   /**
    * Deletes multiple entities by ID.
    *
-   * Checks to see if each entity can be removed or not and if not, ignore it.
-   * In case none of them are allowed to be deleted returns FALSE.
+   * adds can_delete hook support.
    *
    * @param array $entity_ids
-   *   An array of entity IDs to delete.
-   *
    * @param \DatabaseTransaction|null $transaction
    *
    * @throws \Exception
    */
-  public function delete($entity_ids, DatabaseTransaction $transaction = NULL) {
+  final public function delete($entity_ids, DatabaseTransaction $transaction = NULL) {
     if (empty($entity_ids)) {
       return;
     }
@@ -96,7 +96,7 @@ abstract class EntitySpiceEntityController extends EntityAPIController {
  */
 abstract class EntitySpiceEntity extends Entity {
 
-  protected function defaultUri() {
+  final protected function defaultUri() {
     $uri = _entityspice_get_info($this->entityType)->uriBase();
     return ['path' => $uri . '/' . $this->identifier()];
   }
@@ -110,7 +110,8 @@ abstract class EntitySpiceEntity extends Entity {
    *
    * @return mixed
    */
-  public function buildContent($view_mode = 'full', $langcode = NULL, array $content = []) {
+  final public function buildContent($view_mode = 'full', $langcode = NULL, array $content = []) {
+    // TODO all custom fields.
     if (_entityspice_get_info($this->entityType)->hasTitle()) {
       $content['title'] = [
         '#theme' => 'entityspice_entity_property_field',
@@ -148,7 +149,7 @@ abstract class EntitySpiceEntity extends Entity {
  */
 abstract class EntitySpiceMetadataController extends EntityDefaultMetadataController {
 
-  public function entityPropertyInfo() {
+  final public function entityPropertyInfo() {
     $info = parent::entityPropertyInfo();
     $properties = &$info[$this->type]['properties'];
 

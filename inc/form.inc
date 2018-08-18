@@ -81,7 +81,6 @@ function _entityspice_entity_bundle_form($etype, $f, &$fs, $op, $bundle_entity) 
 function _entityspice_entity_bundle_form_submit($etype, &$f, &$fs) {
   $bundle_entity = entity_ui_form_submit_build_entity($f, $fs);
   $bundle_entity->save();
-  menu_rebuild();
   $fs['redirect'] = _entityspice_get_info($etype)->bundleSubmitRedirect();
 }
 

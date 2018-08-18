@@ -377,7 +377,6 @@ function _entityspice_oven_render(array $tokens) {
     }
 
     ob_start();
-    /** @noinspection PhpIncludeInspection */
     require "template/PLACEHOLDER.$f.tpl";
     $files[$f] = ob_get_contents();
     ob_end_clean();
@@ -386,27 +385,42 @@ function _entityspice_oven_render(array $tokens) {
 }
 
 function _entityspice_oven_ekran($target_dir, array $tokens) {
+  if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
+    _entityspice_oven_ekran_drush($target_dir, $tokens);
+  }
+  else {
+    _entityspice_oven_ekran_drupal($target_dir, $tokens);
+  }
+}
+
+function _entityspice_oven_ekran_drush($target_dir, $tokens) {
+  if (!drush_op('chdir', $target_dir)) {
+    return 'could not chdir into target: ' . $target_dir;
+  }
+  foreach (_entityspice_oven_render($tokens) as $file => $text) {
+    $f = drush_op('fopen', 'w', $file);
+    if (!$f) {
+      drush_log('warning', 'could not open file for writing, dry_run? -> ' . $file);
+      continue;
+    }
+    drush_op('fwrite', $f, $text);
+    drush_op('fclose', $f);
+  }
+  return '';
+}
+
+function _entityspice_oven_ekran_drupal($target_dir, $tokens) {
   if (!chdir($target_dir)) {
     return 'could not chdir into target: ' . $target_dir;
   }
   foreach (_entityspice_oven_render($tokens) as $file => $text) {
-    if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
-      $f = drush_op('fopen', 'w', $file);
-      if (!$f) {
-        drush_log('warning', 'could not open file for writing, dry_run? -> ' . $file);
-        continue;
-      }
-      drush_op('fwrite', $f, $text);
-      fclose($f);
+    $f = fopen($file, 'w');
+    if (!$f) {
+      return "could not create file: $file";
     }
-    else {
-      $f = fopen($file, 'w');
-      if (!$f) {
-        return "could not create file: $file";
-      }
-      fwrite($f, $text);
-      fclose($f);
-    }
+    fwrite($f, $text);
+    fclose($f);
   }
   return '';
 }
+

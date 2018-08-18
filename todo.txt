@@ -21,3 +21,7 @@ disallow machine name: delete (etype_delete_form)
 
 support of predelete and can delete optional, it doubles delete time because it loads entity twice.
 entity cache is a good idea.
+
+
+say how to do each shit. for instance how not to display custom fields: by 
+overrighting controller class. look at controller classes.

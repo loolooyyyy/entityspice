@@ -102,6 +102,9 @@ function _entityspice_get_info_all() {
       drupal_alter('entityspice_info', $info);
       cache_set('entityspice', $info);
     }
+    else {
+      $info = $info->data;
+    }
     $drupal_static_fast['info'] = $info;
   }
 
@@ -122,29 +125,6 @@ function _entityspice_get_entity_name($etype, $entity) {
 // _______________________________________________________________________ MAIN
 
 /**
- * Menu callback.
- *
- * Purpose: List available entity types created using ES to add a new entity.
- *
- * @throws \Exception
- */
-function _entityspice_default_page() {
-  $item = menu_get_item();
-  $content = system_admin_menu_block($item);
-
-  // @TODO
-  // Bypass the entity/add listing if only one entity bundle is available.
-  // if (count($content) == 1) {
-  //  $item = array_shift($content);
-  //  drupal_goto($item['href']);
-  // }
-
-  $types = _entityspice_get_info_all();
-  $vars = ['content' => $content, 'types' => array_keys($types)];
-  return theme('entityspice_default_page', $vars);
-}
-
-/**
  * Implements hook_menu().
  */
 function entityspice_menu() {
@@ -154,6 +134,7 @@ function entityspice_menu() {
     'page callback' => '_entityspice_default_page',
     'access arguments' => ['administer entityspice'],
     'description' => 'Default entity page for EntitySpice.',
+    'file' => 'entityspice.admin.inc',
   ];
 
   // Will output information about all modules defining entities using ES.

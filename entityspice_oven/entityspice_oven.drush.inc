@@ -27,11 +27,11 @@ function _entityspice_oven_drush_presume($check_context, $msg) {
   else {
     $stdin = fopen("php://stdin", "r");
     while ($line = fgets($stdin)) {
-      $line = trim($line);
-      if (empty($line) || $line == 'y') {
+      $line = strtolower(trim($line));
+      if (empty($line) || $line === 'y' || $line === 1 || $line[0] === 't' || $line === '1') {
         return TRUE;
       }
-      if ($line == 'n') {
+      if ($line === 'n' || $line === 0 || $line[0] === 'f' || $line === '0') {
         return FALSE;
       }
       drush_print_prompt($msg . " (Y/n): ", 0);
@@ -87,6 +87,7 @@ function entityspice_oven_drush_help($section) {
  * @param string $machine_name
  *
  * @return bool true on success, false otherwise.
+ * @throws \Exception
  */
 function _entityspice_oven_drush_ekran($machine_name = NULL) {
   // ======================================================= Handle machine name
@@ -95,7 +96,7 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
     return FALSE;
   }
   if (module_exists($machine_name)) {
-    drush_set_error("a module names [$machine_name] already exists");
+    drush_set_error("a module named [$machine_name] already exists");
     return FALSE;
   }
   $tokens[_ENTITYSPICE_MACHINE] = $machine_name;
@@ -163,7 +164,7 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
   // ===================================================================== EKRAN
   $tmp = drush_tempdir() . '/' . $machine_name;
   if (!drush_mkdir($tmp)) {
-    drush_log('could not mkdir: ' . $tmp);
+    drush_log('could not mkdir tmp directory: ' . $tmp);
     return FALSE;
   }
   if ($err = _entityspice_oven_ekran($tmp, $tokens)) {
@@ -171,9 +172,12 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
     return FALSE;
   }
 
-  drush_move_dir($tmp, $dest);
-  drush_log('FIN, your beautiful entity type is generated at: ' . $dest, 'ok');
+  if (!drush_move_dir($tmp, $dest)) {
+    drush_log("could not mv $tmp to $dest", 'error');
+    return FALSE;
+  }
 
+  drush_log('FIN, your beautiful entity type is generated at: ' . $dest, 'ok');
   return TRUE;
 }
 
