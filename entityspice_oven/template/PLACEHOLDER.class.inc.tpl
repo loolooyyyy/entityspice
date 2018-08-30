@@ -71,6 +71,8 @@ class <?php echo $a['machine_camel'] ?>EntityController extends EntitySpiceEntit
   public function __construct() {
     parent::__construct($this::_entity_type);
   }
+
+
 }
 
 // ___________________________________________________________________________

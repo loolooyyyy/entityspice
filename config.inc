@@ -52,11 +52,15 @@ interface EntitySpiceEntityConfig {
 
   function hasBundle();
 
+  function bundleLockOnExists();
+
   function bundleIdKey();
 
   function bundleKeyName();
 
   function bundleMachineName();
+
+  function bundleEntityClass();
 
   /**
    * TODO
@@ -129,6 +133,8 @@ interface EntitySpiceEntityConfig {
   function viewsControllerClass();
 
   function entityClass();
+
+  function exceptionClass();
 
   function uriBase();
 
@@ -239,6 +245,14 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
 
   function bundleMachineName() {
     return $this->machine_name . '_bundle';
+  }
+
+  function bundleEntityClass() {
+    return $this->camel_name_upper_first . 'Bundle';
+  }
+
+  function bundleControllerClass() {
+    return $this->camel_name_upper_first . 'BundleController';
   }
 
   function bundleIdKey() {
@@ -452,6 +466,10 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
     return $this->camel_name_upper_first;
   }
 
+  function exceptionClass() {
+    return $this->camel_name_upper_first . 'Exception';
+  }
+
   function bundleUIControllerClass() {
     return $this->camel_name_upper_first . 'BundleUIController';
   }
@@ -459,10 +477,6 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
 
   function bundleClass() {
     return $this->camel_name_upper_first . 'Bundle';
-  }
-
-  function bundleControllerClass() {
-    return $this->camel_name_upper_first . 'BundleController';
   }
 
   function revisionKeyName() {
@@ -475,6 +489,10 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
 
   function hasCanDeleteHook() {
     return FALSE;
+  }
+
+  function bundleLockOnExists() {
+    return TRUE;
   }
 
 }

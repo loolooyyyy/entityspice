@@ -1,59 +1,6 @@
 <?php
 
 /**
- * @file
- * All methods are final. If you wish different behaviour, extend the original
- * class yourself and implement your own logic.
- */
-
-// TODO custom fields.
-// TODO deny delete.
-// TODO Entity default label.
-// TODO custom fields on build content.
-
-// _____________________________________________________________________ BUNDLE
-
-/**
- * Bundle UI controller.
- */
-abstract class EntitySpiceBundleEntityUIController extends EntityDefaultUIController {
-
-}
-
-/**
- * Bundle entity controller.
- */
-abstract class EntitySpiceBundleController extends EntityAPIControllerExportable {
-
-  /**
-   * Delete one or more entity bundles.
-   *
-   * @param array $ids
-   *   Array of entity bundle IDs.
-   * @param DatabaseTransaction $transaction
-   *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
-   *   in their transaction object.
-   *
-   * @throws \Exception
-   */
-  final public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    // TODO do not allow delete if entity exists for this bundle (configurable).
-    parent::delete($ids, $transaction);
-    menu_rebuild();
-  }
-
-}
-
-/**
- * The bundle entities itself.
- */
-abstract class EntitySpiceBundleEntity extends Entity {
-
-}
-
-// _____________________________________________________________________ ENTITY
-
-/**
  * Default entity controller class.
  */
 abstract class EntitySpiceEntityController extends EntityAPIController {

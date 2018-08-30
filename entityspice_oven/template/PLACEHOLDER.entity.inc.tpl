@@ -48,29 +48,6 @@ function <?php echo $a['machine_name'] ?>_view($entity, $view_mode = 'full') {
   return _entityspice_entity_view(<?php print $a['type_const'] ?>, $entity, $view_mode);
 }
 
-<?php if($a['has_bundle']): ?>
-/**
- * @see _entityspice_entity_get_bundles().
- */
-function <?php echo $a['machine_name'] ?>_get_bundles($name = NULL) {
-  return _entityspice_entity_get_bundles(<?php print $a['type_const'] ?>, $name);
-}
-
-/**
- * @see _entityspice_entity_get_bundles_names().
- */
-function <?php echo $a['machine_name'] ?>_get_bundles_names($with_label = FALSE) {
-  return _entityspice_entity_get_bundles_names(<?php print $a['type_const'] ?>, $with_label);
-}
-
-/**
- * @see _entityspice_bundle_save().
- */
-function <?php echo $a['machine_name'] ?>_bundle_save($bundle) {
-  return _entityspice_bundle_save(<?php print $a['type_const'] ?>, $bundle);
-}
-<?php endif; ?>
-
 /**
 * Create a new entity object - DOES NOT SAVE IT.
 *
@@ -82,35 +59,6 @@ function <?php echo $a['machine_name'] ?>_bundle_save($bundle) {
 function <?php echo $a['machine_name'] ?>_create(array $values = []) {
   return entity_get_controller(<?php echo $a['machine_name_const'] ?>)->create($values);
 }
-
-<?php if($a['has_bundle']): ?>
-/**
- * @see _entityspice_entity_get_bundles_names().
-function <?php echo $a['machine_name'] ?>_bundle_options_list() {
-  return _entityspice_entity_get_bundles_names(<?php print $a['type_const'] ?>, TRUE);
-}
-
-/**
- * @see _entityspice_bundle_delete().
- */
-function <?php echo $a['machine_name'] ?>_bundle_delete($bundle) {
-  return _entityspice_bundle_delete(<?php print $a['type_const'] ?>, $bundle);
-}
-
-/**
- * @see _entityspice_bundle_load().
- */
-function <?php echo $a['machine_name'] ?>_bundle_load($bundle) {
-  return _entityspice_bundle_load(<?php print $a['type_const'] ?>, $bundle);
-}
-
-/**
- * @see _entityspice_entity_bundle_access().
- */
-function <?php echo $a['machine_name'] ?>_bundle_access($op, $bundle = NULL, $user = NULL) {
-  return _entityspice_entity_bundle_access(<?php print $a['type_const'] ?>, $op, $bundle, $user);
-}
-<?php endif; ?>
 
 /**
  * @see _entityspice_field_extra_field_info().
@@ -134,6 +82,7 @@ function <?php echo $a['machine_name'] ?>_entity_info_alter(&$entity_info) {
 }
 
 /**
+  TODO bundle?
  * @see _entityspice_entity_add_page.
  */
 function <?php echo $a['machine_name'] ?>_add_page($bundle) {

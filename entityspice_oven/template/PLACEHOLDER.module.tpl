@@ -7,6 +7,9 @@ require_once dirname(__FILE__) . '/<?php echo $a['machine_name'] ?>.class.inc';
 require_once dirname(__FILE__) . '/<?php echo $a['machine_name'] ?>.bundle.class.inc';
 require_once dirname(__FILE__) . '/<?php echo $a['machine_name'] ?>.forms.inc';
 
+class <?php echp $a['exception class'] > extends RuntimeException {
+}
+
 /**
  * Implements hook_menu().
  */
