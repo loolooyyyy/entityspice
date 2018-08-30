@@ -16,6 +16,8 @@
       <w>langcode</w>
       <w>sinfo</w>
       <w>stdin</w>
+      <w>strlen</w>
+      <w>stype</w>
       <w>userland</w>
     </words>
   </dictionary>

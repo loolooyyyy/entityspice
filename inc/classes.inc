@@ -1,52 +1,8 @@
 <?php
 
-/**
- * Default entity controller class.
- */
-abstract class EntitySpiceEntityController extends EntityAPIController {
-
-  /**
-   * Deletes multiple entities by ID.
-   *
-   * adds can_delete hook support.
-   *
-   * @param array $entity_ids
-   * @param \DatabaseTransaction|null $transaction
-   *
-   * @throws \Exception
-   */
-  final public function delete($entity_ids, DatabaseTransaction $transaction = NULL) {
-    if (empty($entity_ids)) {
-      return;
-    }
-    if (_entityspice_get_info($this->entityType)->hasCanDeleteHook()) {
-      $hook = $this->entityType . '_can_delete';
-      $ids = [];
-      foreach ($this->load($entity_ids) as $entity_id => $entity) {
-        if (!in_array(FALSE, module_invoke_all($hook, $entity, $this->entityType))) {
-          $ids[] = $entity_id;
-        }
-      }
-      if (!empty($ids)) {
-        parent::delete($ids, $transaction);
-      }
-    }
-    else {
-      parent::delete($entity_ids, $transaction);
-    }
-  }
-
-}
-
-/**
- * The mighty entity class, for the entity itself.
- */
+// TODO
 abstract class EntitySpiceEntity extends Entity {
 
-  final protected function defaultUri() {
-    $uri = _entityspice_get_info($this->entityType)->uriBase();
-    return ['path' => $uri . '/' . $this->identifier()];
-  }
 
   /**
    * Override buildContent() to add entity properties.
@@ -81,19 +37,7 @@ abstract class EntitySpiceEntity extends Entity {
 
 }
 
-/**
- *  Controls metadata for entity.
- *
- * TODO what?
- *
- *  entityspice utilizes custom property attributes to determine if a property
- *  should be available as a filter on the listing page. These attributes are
- *  filter: TRUE to add as a filter.
- *  filter_operator: EFQ supported operators. Defaults to = or IN depending on
- *  value submitted
- *  field_type: textfield, select, etc.
- *  options list: callback that returns the options for this field.
- */
+// TODO
 abstract class EntitySpiceMetadataController extends EntityDefaultMetadataController {
 
   final public function entityPropertyInfo() {
@@ -167,6 +111,45 @@ abstract class EntitySpiceMetadataController extends EntityDefaultMetadataContro
     }
 
     return $info;
+  }
+
+}
+
+// TODO
+abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityFormController {
+
+  public function entityForm($f, &$fs) {
+    $f = parent::entityForm($f, $fs);
+    $entity = $f['#entity'];
+    $info = _entityspice_get_info($this->entityType);
+    // TODO?
+    // Do some prep work on the entities, similarly to node_form().
+    if ($info->hasTitle()) {
+      $key = $info->titleKey();
+      $label = $info->titleLabel();
+      if (!isset($entity->{$key})) {
+        $entity->{$key} = '';
+      }
+      $f[$key] = [
+        '#type' => 'textfield',
+        '#title' => t($label),
+        '#default_value' => $entity->{$key},
+        '#maxlength' => 255,
+        '#required' => TRUE,
+        '#weight' => -6,
+      ];
+    }
+    return $f;
+  }
+
+  public function entityFormSubmit(&$f, &$fs) {
+    parent::entityFormSubmit($f, $fs);
+    $entity = &$f['#entity'];
+    $info = _entityspice_get_info($this->entityType);
+    if ($info->hasUid()) {
+      $entity->{$info->uidKey()} = $GLOBALS['user']->uid;
+    }
+    $entity = entity_save($this->entityType, $entity);
   }
 
 }

@@ -48,6 +48,8 @@ interface EntitySpiceEntityConfig {
 
   function uidKey();
 
+  function develSupport();
+
   // ___________________________________________________________________ BUNDLE
 
   function hasBundle();
@@ -175,6 +177,8 @@ interface EntitySpiceEntityConfig {
   function hasInlineEntityFormSupport();
 
   function inlineInlineEntityForm();
+
+  function inlineInlineEntityFormClass();
 
 }
 
@@ -495,4 +499,11 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
     return TRUE;
   }
 
+  function inlineInlineEntityFormClass() {
+    return $this->camel_name_upper_first . 'InlineEntityFormController';
+  }
+
+  function develSupport() {
+    return TRUE;
+  }
 }

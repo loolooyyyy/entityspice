@@ -6,9 +6,9 @@
  */
 
 /**
- * The class used for entities.
+ * The mighty entity class, for the entity itself.
  */
-class <?php echo $a['machine_camel'] ?> extends EntitySpiceEntity {
+class <?php echo $a['machine_camel'] ?> extends Entity {
   const _entity_type = <?php print $a['type_const'] ?>;
 
 <?php if($a['has_title']): ?>
@@ -45,10 +45,6 @@ class <?php echo $a['machine_camel'] ?> extends EntitySpiceEntity {
     parent::__construct($values, $this::_entity_type);
   }
 
-  // @codingStandardsIgnoreStart
-  // @TODO ADD user properties.
-  // @codingStandardsIgnoreEnd
-
 <?php if($a['has_uid']): ?>
   /**
    * Set UID of user who owns this entity.
@@ -57,6 +53,12 @@ class <?php echo $a['machine_camel'] ?> extends EntitySpiceEntity {
     $this-><?php print $a['uid_name'] ?> = $<?php print $a['uid_name'] ?>;
   }
 <?php endif; ?>
+
+  final protected function defaultUri() {
+    $base = <?php echo $a['uri base']; >
+    return ['path' => $base . '/' . $this->identifier()];
+  }
+
 }
 
 // ___________________________________________________________________________
@@ -65,13 +67,40 @@ class <?php echo $a['machine_camel'] ?> extends EntitySpiceEntity {
  * The controller class for entities contains methods for the entity CRUD
  * operations.
  */
-class <?php echo $a['machine_camel'] ?>EntityController extends EntitySpiceEntityController {
+class <?php echo $a['machine_camel'] ?>EntityController extends EntityDefaultMetadataController {
   const _entity_type = <?php print $a['type_const'] ?>;
 
   public function __construct() {
     parent::__construct($this::_entity_type);
   }
 
+<?php if($a['has can delete hook']): ?>
+  /**
+   * Deletes multiple entities by ID.
+   *
+   * adds can_delete hook support.
+   *
+   * @param array $entity_ids
+   * @param \DatabaseTransaction|null $transaction
+   *
+   * @throws \Exception
+   */
+  public function delete($entity_ids, DatabaseTransaction $transaction = NULL) {
+    if (empty($entity_ids)) {
+      return;
+    }
+    $hook = $this->entityType . '_can_delete';
+    $ids = [];
+    foreach ($this->load($entity_ids) as $entity_id => $entity) {
+      if (!in_array(FALSE, module_invoke_all($hook, $entity, $this->entityType))) {
+        $ids[] = $entity_id;
+      }
+    }
+    if (!empty($ids)) {
+      parent::delete($ids, $transaction);
+    }
+  }
+<?php endif; ?>
 
 }
 

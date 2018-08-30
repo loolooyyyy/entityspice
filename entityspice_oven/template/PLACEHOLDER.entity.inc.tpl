@@ -97,3 +97,16 @@ function <?php echo $a['machine_name'] ?>_add_page($bundle) {
 function <?php echo $a['machine_name'] ?>_entity_info() {
   return _entityspice_entity_info(<?php print $a['type_const'] ?>);
 }
+
+/**
+ * Makes sure entity exists.
+ *
+ * @param mixed $entity entity id or entity object with an id.
+ *
+ * @return bool true if entity exists with the given id.
+ */
+function _entityspice_entity_exists_in_db($entity_or_id) {
+  $id = is_object($entity) ? $entity->getID() : $entity;
+  // TODO!
+  return entity_load("<?php echo $a['machine_name'] ?>", [$id]);
+}

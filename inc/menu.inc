@@ -1,116 +1,5 @@
 <?php
 
-// _______________________________________________________________________ MENU
-
-/**
- * implementation for hook_menu().
- *
- * @param $etype string entity type.
- *
- * @return mixed
- * @throws \Exception
- */
-function _entityspice_entity_menu_items($etype) {
-  $sinfo = _entityspice_get_info($etype);
-  $einfo = entity_get_info($etype);
-
-  $root = $sinfo->parentUserlandPath();
-
-  $items[$root] = [
-    'title' => $sinfo->humanName(),
-    'description' => 'View ' . $sinfo->humanName() . 's',
-    'page callback' => '_entityspice_entity_page',
-    'page arguments' => [$etype],
-    'access arguments' => ["administer $etype"],
-  ];
-  $items[$root . '/add'] = [
-    'title' => 'Add a ' . $sinfo->humanName(),
-    'description' => 'Add a new ' . $sinfo->humanName(),
-    'page callback' => '_entityspice_entity_bundles_list_page',
-    'page arguments' => [$etype],
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => ['add ' . $etype],
-  ];
-
-  foreach ($einfo['bundles'] as $bun_name => $bundle) {
-    $items[$root . '/add/' . $bun_name] = [
-      'title' => $bundle['label'],
-      'title callback' => 'check_plain',
-      'description' => isset($bundle['description']) ? $bundle['description'] : '',
-      'page callback' => '_entityspice_entity_add_page',
-      'page arguments' => [$etype, $bun_name],
-      'access arguments' => ['add ' . $etype . ' : ' . $bun_name],
-    ];
-  }
-
-  $arg_no = $sinfo['parent user path arg no'];
-  $access_cbk = $etype . '_entity_access';
-
-  $items[$root . '/%'] = [
-    'title callback' => '_entityspice_entity_title',
-    'title arguments' => [$etype, $arg_no],
-    'page callback' => '_entityspice_entity_view',
-    'page arguments' => [$etype, $arg_no],
-    'weight' => 10,
-    'access callback' => $access_cbk,
-    'access arguments' => ['view', $arg_no],
-  ];
-  $items[$root . '/%/view'] = [
-    'title' => 'Summary',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-    'access callback' => $access_cbk,
-    'access arguments' => ['view', $arg_no],
-  ];
-  $items[$root . '/%/view/edit'] = [
-    'title' => 'Edit',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => [$sinfo->editForm(), $arg_no],
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
-    'access callback' => $access_cbk,
-    'access arguments' => ['edit', $arg_no],
-  ];
-  $items[$root . '/%/view/delete'] = [
-    'title' => 'Delete',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => [$sinfo->deleteForm(), $arg_no],
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 5,
-    'access callback' => $access_cbk,
-    'access arguments' => ['delete', $arg_no],
-  ];
-
-  if (module_exists('devel')) {
-    $items[$root . '/%/devel'] = [
-      'title' => 'Devel',
-      'page callback' => '_entityspice_devel_load_object',
-      'file' => 'inc/dev_datahandler.class.inc',
-      'page arguments' => [$etype, $arg_no],
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 100,
-      'access arguments' => ['access devel information'],
-    ];
-    $items[$root . '/%/devel/load'] = [
-      'title' => 'Load',
-      'type' => MENU_DEFAULT_LOCAL_TASK,
-      'access arguments' => ['access devel information'],
-    ];
-    $items[$root . '/%/devel/render'] = [
-      'title' => 'Render',
-      'page callback' => '_entityspice_devel_render_object',
-      'file' => 'inc/dev_datahandler.class.inc',
-      'page arguments' => [$etype, $arg_no],
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 100,
-      'access arguments' => ['access devel information'],
-    ];
-  }
-
-  return $items;
-}
-
 /**
  * Why did I put this here? what does these comments mean? :|
  *
@@ -138,41 +27,6 @@ function _entityspice_menu_local_task_alter($etype, &$data, $router_item, $root_
       ];
     }
   }
-}
-
-/**
- * implementation for hook_admin_menu_map().
- *
- * @param $etype string entity type.
- *
- * @return array admin menu map
- */
-function _entityspice_admin_menu_map($etype) {
-  $i = _entityspice_get_info($etype)['_entityspice_entity_info_alter'];
-  $path = $i['path'];
-  $name = '%' . $i['name'];
-
-  $map[$path]['parent'] = $i['parent'];
-  $map[$path]['arguments'][][$name] =
-    _entityspice_entity_get_bundles_names($etype, FALSE);
-
-  return $map;
-}
-
-/**
- * Makes sure entity exists.
- *
- * Is called in menu callbacks, like entity delete form or entity view page, to
- * make sure asked entity actually exists.
- *
- * @param $etype string entity type
- * @param $entity object/int entity id or entity object with an id.
- *
- * @return bool true if entity of etype exists with the given id.
- */
-function _entityspice_entity_exists_in_db($etype, $entity) {
-  $id = is_object($entity) ? $entity->getID() : $entity;
-  return ctype_digit($id) && entity_load($etype, [$id]);
 }
 
 // _______________________________________________________________________ PAGE
@@ -208,7 +62,6 @@ function _entityspice_entity_bundles_list_page($etype) {
  * Page callback for entity overview page.
  *
  * @param $etype string entity type.
- * @param array $overrides overridden values when getting entity type info.
  *
  * @return array
  * @throws \Exception

@@ -6,7 +6,6 @@ const _ENTITYSPICE_OVEN_FILES = [
   'entity.inc',
   'forms.inc',
   'info',
-  'inline_entity_form.inc',
   'install',
   'module',
 ];

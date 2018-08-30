@@ -30,3 +30,12 @@ t, filter_xss_admin and friends
 
 
 say how safe works, say classes or tables may still collide
+
+
+
+
+should beware of bundle permission? if so labels need check plain? where else does this need check plain?
+how does the behaviour change if user decides to give permission?
+where to checkplain always regardless of role, user and permissoin, just to be safe?
+
+plugable access mechanism
