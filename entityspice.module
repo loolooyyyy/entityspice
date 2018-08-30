@@ -156,7 +156,7 @@ function entityspice_menu() {
  */
 function entityspice_permission() {
   $p['administer entityspice'] = [
-    'title' => 'Administer EntitySpice',
+    'title' => 'administer entityspice',
   ];
   return $p;
 }

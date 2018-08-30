@@ -1,59 +1,5 @@
 <?php
 
-// _____________________________________________________________________ BUNDLE
-
-/**
- * Create a new bundle object.
- *
- * TODO remove
- *
- * @param string $etype type of bundle to create.
- * @param array $values
- *   Associative array of values. At least include ['type' => $type].
- *
- * @return \Entity created bundle.
- */
-function _entityspice_bundle_create($etype, array $values = []) {
-  return _entityspice_entity_create($etype, $values);
-}
-
-/**
- * Load a entity bundle by string.
- *
- * TODO remove
- *
- * @param string $etype entity type the requested bundle belongs to.
- * @param string $name The machine-readable name of a bundle to load.
- *
- * @return array.
- *   An entity bundle array or FALSE if $bundle does not exist.
- */
-function _entityspice_bundle_load($etype, $name) {
-  return _entityspice_entity_get_bundle($etype, $name);
-}
-
-/**
- * Deletes a bundle of an entity type.
- *
- * TODO remove
- *
- * @param entity $bundle entity object representing the bundle.
- */
-function _entityspice_bundle_delete($bundle) {
-  $bundle->delete();
-}
-
-/**
- * Saves a bundle to the db.
- *
- * TODO remove
- *
- * @param entity $bundle the bundle to delete.
- */
-function _entityspice_bundle_save($bundle) {
-  $bundle->save();
-}
-
 // _____________________________________________________________________ ENTITY
 
 /**

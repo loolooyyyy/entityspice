@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PhpIncludePathManager">
+    <include_path>
+      <path value="$PROJECT_DIR$/../../../../includes" />
+      <path value="$PROJECT_DIR$/../../../../modules" />
+      <path value="$PROJECT_DIR$/../date" />
+      <path value="$PROJECT_DIR$/../datex" />
+      <path value="$PROJECT_DIR$/../devel" />
+      <path value="$PROJECT_DIR$/../views" />
+      <path value="$PROJECT_DIR$/../ctools" />
+      <path value="$PROJECT_DIR$/../entity" />
+      <path value="$PROJECT_DIR$/../admin_menu" />
+    </include_path>
+  </component>
+  <component name="PhpProjectSharedConfiguration" php_language_level="5.4.0" />
+</project>

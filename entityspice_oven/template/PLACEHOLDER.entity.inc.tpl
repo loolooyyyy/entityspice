@@ -1,10 +1,16 @@
 <?php print $a['php'] ?>
 
 /**
- * @see _entityspice_entity_load().
- */
+* Loads an entity by ID.
+*
+* @param mixed $id integer id (or any other type) uniquely identifying an
+*   entity.
+*
+* @return \Entity the loaded entity or NULL if nothing was loaded.
+*/
 function <?php echo $a['machine_name'] ?>_load($id) {
-  return _entityspice_entity_load(<?php print $a['type_const'] ?>, $id);
+  $load = entity_load(<?php echo $a['machine_name'] ?>, [$id]);
+  return isset($load[$id]) ? $load[$id] : NULL;
 }
 
 /**
@@ -66,10 +72,15 @@ function <?php echo $a['machine_name'] ?>_bundle_save($bundle) {
 <?php endif; ?>
 
 /**
- * @see _entityspice_entity_create.
- */
+* Create a new entity object - DOES NOT SAVE IT.
+*
+* @param array $values
+*   Associative array of values.
+*
+* @return \Entity created entity.
+*/
 function <?php echo $a['machine_name'] ?>_create(array $values = []) {
-  return _entityspice_entity_create(<?php print $a['type_const'] ?>, $values);
+  return entity_get_controller(<?php echo $a['machine_name_const'] ?>)->create($values);
 }
 
 <?php if($a['has_bundle']): ?>

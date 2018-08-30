@@ -13,6 +13,8 @@
  *   with optional options.
  *
  * @return array suitable for form API select element.
+ *
+ * @Deprecated
  */
 function _entityspice_generate_field_list($field_type, $has_none_option) {
   // Also correctly checks an empty array.
@@ -36,6 +38,8 @@ function _entityspice_generate_field_list($field_type, $has_none_option) {
  * @param bool $none_option whether to include a 'none' option in the list.
  *
  * @return array list of fields.
+ *
+ * @Deprecated
  */
 function _entityspice_generate_field_list_from_bundle($etype, $bundle, $none_option) {
   $fields = $none_option ? ['NONE' => t('NONE')] : [];

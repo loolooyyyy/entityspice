@@ -2,6 +2,20 @@
 
 // TODO create delegate.
 
+// TODO specify names that may collide (tables, classes).
+
+/*
+ * TODO some comment from old es?
+ *
+// This variable needed in hook_menu so that ES will know what will be the
+// position of arg in each path. It is determined by how many words between
+// slashes (es/type/% : 2) appear before the arg.
+$d['parent user path arg no'] =
+count(explode('/', $d['parent userland path']));
+ * @return array
+ */
+
+
 /**
  * Configuration keys of an entity supported by entity spice.
  *
@@ -12,22 +26,25 @@
  */
 interface EntitySpiceEntityConfig {
 
-  function module();
-
   function machineName();
+
+  function safe();
+
+
+  function machineNameConst();
+
+  function module();
 
   function humanName();
 
-  function camelNameLowerFirst();
+  function camelNameLcFirst();
 
-  function camelNameUpperFirst();
+  function camelNameUcFirst();
 
 
   function idKey();
 
   function titleKey();
-
-  function ridKey();
 
   function uidKey();
 
@@ -37,11 +54,16 @@ interface EntitySpiceEntityConfig {
 
   function bundleIdKey();
 
-  function isBundleFieldable();
+  function bundleKeyName();
 
   function bundleMachineName();
 
-  function bundleKeyName();
+  /**
+   * TODO
+   */
+  function bundleIsEntity();
+
+  function isBundleFieldable();
 
   function bundleTable();
 
@@ -70,6 +92,7 @@ interface EntitySpiceEntityConfig {
 
   // _________________________________________________________________ REVISION
 
+  function ridKey();
 
   function hasRevision();
 
@@ -79,6 +102,10 @@ interface EntitySpiceEntityConfig {
 
   function revisionKeyName();
 
+  // _____________________________________________________________________ USER
+
+  function hasUid();
+
   // ___________________________________________________________________ ENTITY
 
   function baseTable();
@@ -86,8 +113,6 @@ interface EntitySpiceEntityConfig {
   function titleLabel();
 
   function hasTitle();
-
-  function hasUid();
 
   function hasUpdated();
 
@@ -145,12 +170,6 @@ interface EntitySpiceEntityConfig {
 
   function inlineInlineEntityForm();
 
-
-  /**
-   * NOT implemented.
-   */
-  function bundleIsEntity();
-
 }
 
 /**
@@ -167,6 +186,8 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
 
   private $camel_name_upper_first;
 
+  private $safe;
+
   /**
    * @param $machine_name string machine name of entity this config belongs to.
    */
@@ -180,6 +201,7 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
         (is_string($machine_name) ? $machine_name : 'NON_STRING_GIVEN'));
     }
 
+    $this->safe = '_';
     $this->machine_name = $machine_name;
     $this->label_name = ucwords(str_replace('_', ' ', $machine_name));
     $this->camel_name_upper_first = str_replace(' ', '', $this->label_name);
@@ -194,11 +216,20 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
     return $this->machine_name;
   }
 
-  function camelNameLowerFirst() {
+  function machineNameConst() {
+    return '_ETYPE__' . strtoupper($this->machine_name);
+  }
+
+  function safe() {
+    return $this->safe;
+  }
+
+
+  function camelNameLcFirst() {
     return lcfirst($this->camel_name_upper_first);
   }
 
-  function camelNameUpperFirst() {
+  function camelNameUcFirst() {
     return $this->camel_name_upper_first;
   }
 
@@ -389,17 +420,6 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
   function inlineInlineEntityForm() {
     return $this->camel_name_upper_first . 'InlineEntityFormController';
   }
-
-  /*
-   *
-  // This variable needed in hook_menu so that ES will know what will be the
-  // position of arg in each path. It is determined by how many words between
-  // slashes (es/mytype/% : 2) appear before the arg.
-  $d['parent user path arg no'] =
-  count(explode('/', $d['parent userland path']));
-   * @return array
-   */
-
 
   function accessControlledActions() {
     return [

@@ -25,3 +25,8 @@ entity cache is a good idea.
 
 say how to do each shit. for instance how not to display custom fields: by 
 overrighting controller class. look at controller classes.
+
+t, filter_xss_admin and friends
+
+
+say how safe works, say classes or tables may still collide
