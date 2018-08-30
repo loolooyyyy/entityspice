@@ -32,33 +32,6 @@ function _entityspice_menu_local_task_alter($etype, &$data, $router_item, $root_
 // _______________________________________________________________________ PAGE
 
 /**
- * Page callback for adding an entity.
- *
- * Return a list of available bundles to add or the add entity page if there's
- * only a single bundle.
- *
- * @param $etype string entity type.
- *
- * @return string themed output of bundles list for an entity type.
- * @throws \Exception them() throws exception.
- */
-function _entityspice_entity_bundles_list_page($etype) {
-  $item = menu_get_item();
-  $content = system_admin_menu_block($item);
-
-  // Bypass the entity/add listing if only one entity bundle is available.
-  if (count($content) == 1) {
-    $item = array_shift($content);
-    drupal_goto($item['href']);
-  }
-
-  $vars = ['content' => $content, 'entity_type' => $etype];
-  $output = theme('entityspice_entity_add_list', $vars);
-
-  return $output;
-}
-
-/**
  * Page callback for entity overview page.
  *
  * @param $etype string entity type.
@@ -209,39 +182,6 @@ function _entityspice_entity_page($etype) {
     ],
   ];
   return $output;
-}
-
-/**
- * Page callback for adding an entity.
- *
- * @param $etype string entity type
- * @param $bundle string bundle of entity being added.
- * @param array $overrides overridden values when getting entity type info.
- *
- * @return array entity add form.
- * @throws \Exception
- */
-function _entityspice_entity_add_page($etype, $bundle, array $overrides = []) {
-  $info = _entityspice_get_info($etype);
-
-  $module = isset($overrides['module']) ? $overrides['module'] : $info['module'];
-  $form_callback = isset($overrides['form callback']) ? $overrides['add form'] : $info['add form'];
-
-  if (isset($overrides['form file'])) {
-    $form_file = $overrides['form file'];
-  }
-  else {
-    $dir = $info['forms file']['directory'] ? '/' . $info['forms file']['directory'] : '/';
-    $file = $info['forms file']['file'];
-    $suffix = $info['forms file']['suffix'];
-    $form_file = $dir . $file . '.' . $suffix;
-  }
-
-  require_once drupal_get_path('module', $module) . $form_file;
-
-
-  $entity = _entityspice_entity_create($etype, ['bundle' => $bundle]);
-  return drupal_get_form($form_callback, $entity);
 }
 
 // ______________________________________________________________________ THEME

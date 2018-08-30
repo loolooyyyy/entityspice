@@ -14,11 +14,13 @@
       <w>etype</w>
       <w>fieldable</w>
       <w>langcode</w>
+      <w>nbsp</w>
       <w>sinfo</w>
       <w>stdin</w>
       <w>strlen</w>
       <w>stype</w>
       <w>userland</w>
+      <w>wsod</w>
     </words>
   </dictionary>
 </component>

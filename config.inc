@@ -312,12 +312,7 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
   }
 
   function formsFile() {
-    // Final slash is needed.
-    return [
-      'directory' => '/',
-      'file' => $this->machine_name . ".forms",
-      'suffix' => 'inc',
-    ];
+    return '/' . $this->machine_name . ".forms.inc";
   }
 
   function uriBase() {

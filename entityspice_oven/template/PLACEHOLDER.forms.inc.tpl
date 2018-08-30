@@ -4,7 +4,7 @@
  * @see _entityspice_entity_form().
  */
 function <?php echo $a['machine_name'] ?>_form($f, &$fs, $entity) {
-  $form = _entityspice_entity_form(<?php print $a['type_const'] ?>, $f, $fs, $entity);
+  $form = _entityspice_entity_form("<?php print $a['machine name'] ?>", $f, $fs, $entity);
 
   return $form;
 }
@@ -13,7 +13,7 @@ function <?php echo $a['machine_name'] ?>_form($f, &$fs, $entity) {
  * @see _entityspice_entity_form_validate().
  */
 function <?php echo $a['machine_name'] ?>_form_validate($f, &$fs) {
-  $validate = _entityspice_entity_form_validate(<?php print $a['type_const'] ?>, $f, $fs);
+  $validate = _entityspice_entity_form_validate("<?php print $a['machine name'] ?>", $f, $fs);
 
   return $validate;
 }
@@ -22,7 +22,7 @@ function <?php echo $a['machine_name'] ?>_form_validate($f, &$fs) {
  * @see _entityspice_entity_form_submit().
  */
 function <?php echo $a['machine_name'] ?>_form_submit($f, &$fs) {
-  $submit = _entityspice_entity_form_submit(<?php print $a['type_const'] ?>, $f, $fs);
+  $submit = _entityspice_entity_form_submit("<?php print $a['machine name'] ?>", $f, $fs);
 
   return $submit;
 }
@@ -31,7 +31,7 @@ function <?php echo $a['machine_name'] ?>_form_submit($f, &$fs) {
  * @see _entityspice_entity_delete_form().
  */
 function <?php echo $a['machine_name'] ?>_delete_form($f, &$fs, $entity) {
-  $form = _entityspice_entity_delete_form(<?php print $a['type_const'] ?>, $f, $fs, $entity);
+  $form = _entityspice_entity_delete_form("<?php print $a['machine name'] ?>", $f, $fs, $entity);
 
   return $form;
 }
@@ -40,7 +40,7 @@ function <?php echo $a['machine_name'] ?>_delete_form($f, &$fs, $entity) {
  * @see _entityspice_entity_form_entity_delete_form_submit().
  */
 function <?php echo $a['machine_name'] ?>_delete_form_submit($f, &$fs) {
-  $submit = _entityspice_entity_form_entity_delete_form_submit(<?php print $a['type_const'] ?>, $f, $fs);
+  $submit = _entityspice_entity_form_entity_delete_form_submit("<?php print $a['machine name'] ?>", $f, $fs);
 
   return $submit;
 }
@@ -52,7 +52,7 @@ function <?php echo $a['machine_name'] ?>_delete_form_submit($f, &$fs) {
  * @see _entityspice_entity_bundle_form().
  */
 function <?php echo $a['machine_name'] ?>_bundle_form($f, &$fs, $entity, $op = 'edit') {
-  $form = _entityspice_entity_bundle_form(<?php print $a['type_const'] ?>, $f, $fs, $op, $entity);
+  $form = _entityspice_entity_bundle_form("<?php print $a['machine name'] ?>", $f, $fs, $op, $entity);
 
   return $form;
 }
@@ -61,7 +61,7 @@ function <?php echo $a['machine_name'] ?>_bundle_form($f, &$fs, $entity, $op = '
  * @see _entityspice_entity_bundle_form_submit().
  */
 function <?php echo $a['machine_name'] ?>_bundle_form_submit(&$f, &$fs) {
-  $submit = _entityspice_entity_bundle_form_submit(<?php print $a['type_const'] ?> ,$f, $fs);
+  $submit = _entityspice_entity_bundle_form_submit("<?php print $a['machine name'] ?>" ,$f, $fs);
 
   return $submit;
 }
@@ -70,7 +70,7 @@ function <?php echo $a['machine_name'] ?>_bundle_form_submit(&$f, &$fs) {
  * @see _entityspice_entity_bundle_form_submit_delete().
  */
 function <?php echo $a['machine_name'] ?>_form_submit_delete(&$f, &$fs) {
-  $submit = _entityspice_entity_bundle_form_submit_delete(<?php print $a['type_const'] ?>, $f, $fs);
+  $submit = _entityspice_entity_bundle_form_submit_delete("<?php print $a['machine name'] ?>", $f, $fs);
 
   return $submit;
 }

@@ -16,7 +16,7 @@
  * The class used for bundle entities
  */
 class <?php echo $a['bundle entity class'] ?> extends Entity {
-  const _entity_type = <?php print $a['bundle machine name'] ?>;
+  const _entity_type = '<?php print $a['bundle machine name'] ?>';
 
   /**
    * String: Machine name of bundle entity.
@@ -43,7 +43,7 @@ class <?php echo $a['bundle entity class'] ?> extends Entity {
  * operations. The load method is inherited from the default controller.
  */
 class <?php print $a['bundle controller class'] ?> extends EntityAPIControllerExportable {
-  const _entity_type = <?php print $a['bundle machine name'] ?>;
+  const _entity_type = '<?php print $a['bundle machine name'] ?>';
 
   /**
    * @see parent
@@ -67,7 +67,7 @@ class <?php print $a['bundle controller class'] ?> extends EntityAPIControllerEx
  * Entity Bundle UI controller.
  */
 class <?php print $a['machine_camel'] ?>BundleUIController extends EntityDefaultUIController {
-  const _entity_type = <?php print $a['type_const'] ?>;
+  const _entity_type = '<?php print $a['type_const'] ?>';
 
   public function __construct($entity_info) {
     parent::__construct($this::_entity_type, $entity_info);
@@ -83,7 +83,7 @@ class <?php print $a['machine_camel'] ?>BundleUIController extends EntityDefault
 * @return \Entity created bundle.
 */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_create(array $values = []) {
-  return entity_get_controller(<?php echo $a['bundle machine name'] ?>)->create($values);
+  return entity_get_controller('<?php echo $a['bundle machine name'] ?>')->create($values);
 }
 
 /**

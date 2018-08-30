@@ -55,7 +55,7 @@ class <?php echo $a['machine_camel'] ?> extends Entity {
 <?php endif; ?>
 
   final protected function defaultUri() {
-    $base = <?php echo $a['uri base']; >
+    $base = "<?php echo $a['uri base']; >";
     return ['path' => $base . '/' . $this->identifier()];
   }
 
@@ -68,7 +68,7 @@ class <?php echo $a['machine_camel'] ?> extends Entity {
  * operations.
  */
 class <?php echo $a['machine_camel'] ?>EntityController extends EntityDefaultMetadataController {
-  const _entity_type = <?php print $a['type_const'] ?>;
+  const _entity_type = '<?php print $a['type_const'] ?>';
 
   public function __construct() {
     parent::__construct($this::_entity_type);
@@ -110,7 +110,7 @@ class <?php echo $a['machine_camel'] ?>EntityController extends EntityDefaultMet
  * Entity Views Controller class.
  */
 class <?php echo $a['machine_camel'] ?>ViewsController extends EntityDefaultViewsController {
-  const _entity_type = <?php print $a['type_const'] ?>;
+  const _entity_type = '<?php print $a['type_const'] ?>';
 
   public function __construct() {
     parent::__construct($this::_entity_type);
@@ -134,7 +134,7 @@ class <?php echo $a['machine_camel'] ?>ViewsController extends EntityDefaultView
  * Controls metadata for entities.
  */
 class <?php echo $a['machine_camel'] ?>MetadataController extends EntitySpiceMetadataController {
-  const _entity_type = <?php print $a['type_const'] ?>;
+  const _entity_type = '<?php print $a['type_const'] ?>';
 
   public function __construct() {
     parent::__construct($this::_entity_type);
