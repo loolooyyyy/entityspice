@@ -31,7 +31,8 @@ function _entityspice_field_extra_field_info($etype, array $form = [], array $di
   // TODO
   $extra = [];
   if (_entityspice_get_info($etype)['has_title']) {
-    foreach (_entityspice_entity_get_bundles($etype) as $bundle => $info) {
+    $bundles = NULL;
+    foreach ($bundles as $bundle => $info) {
       $extra[$etype][$bundle] = [
         'form' => [
           'title' => [
@@ -53,70 +54,6 @@ function _entityspice_field_extra_field_info($etype, array $form = [], array $di
 }
 
 
-/**
- * Gets an array of all bundles, keyed by the name.
- *
- * @param string $etype entity type.
- * @param string $name if set, the bundle with the given name is returned.
- *
- * @return array|mixed
- */
-function _entityspice_entity_get_bundle($etype, $name) {
-  if (!_entityspice_get_info($etype)->hasBundle()) {
-    throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
-  }
-  $bundle_machine_name = _entityspice_get_info($etype)->bundleMachineName();
-  $bundles = entity_load_multiple_by_name($bundle_machine_name, [$name]);
-  return reset($bundles);
-}
-
-/**
- * Gets an array of all bundles, keyed by the name.
- *
- * @param string $etype entity type.
- *
- * @return array|mixed
- */
-function _entityspice_entity_get_bundles($etype) {
-  if (!_entityspice_get_info($etype)) {
-    throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
-  }
-  $bundle_machine_name = _entityspice_get_info($etype)->bundleMachineName();
-  return entity_load_multiple_by_name($bundle_machine_name);
-}
-
-/**
- * Generate a list of bundle names of a given entity type.
- *
- * Default arguments MUST be in a way so that calling the function without any
- * arguments generates an apropirate list of names for form API.
- *
- * @param string $etype
- *   Entity type.
- * @param string $with_label
- *   Return associative array instead, Which has bundle name as key and label
- *   as value. Will be good for form API.
- * @param string $check_plain
- *   Whether to pass bundle label through checkp_plain or not.
- *
- * @return array bundle names.
- */
-function _entityspice_entity_get_bundles_names($etype, $with_label = TRUE, $check_plain = TRUE) {
-  if (!_entityspice_get_info($etype)) {
-    throw new EntitySpiceOperationNotSupported("entity type [$etype] does not implement a bundle system.");
-  }
-  $bundles = _entityspice_entity_get_bundles($etype);
-  if ($with_label) {
-    $ret = [];
-    foreach ($bundles as $bundle => $info) {
-      $ret[$bundle] = $check_plain ? check_plain($info->label) : $info->label;
-    }
-  }
-  else {
-    $ret = array_keys($bundles);
-  }
-  return $ret;
-}
 
 /**
  * Implements hook_entity_info().
@@ -209,7 +146,7 @@ function _entityspice_entity_info($etype) {
  * Also used to filter entity list pages.
  *
  * TODO too damn complex. WTF?
- *
+
  * @param string $entity_type
  *   Entity type to filter by.
  * @param array $header

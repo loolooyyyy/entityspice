@@ -55,27 +55,70 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_form_validate($f, &$fs) {
  */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_form_submit($f, &$fs) {
   $machine_name = '<?php echo $a['machine_name'] ?>';
+  $entity = &$fs['entity'];
+
+  // TODO custom prop
+
+  field_attach_submit($machine_name, $entity, $f, $fs);
+  $entity = entity_save($machine_name, $entity);
+
+  $name = <?php echo $a['safe'] . $a['machine_name'] ?>_entity_name($entity);
+  $msg = t('@name saved.', ['@name' => $name]);
+  drupal_set_message($msg, 'status', FALSE);
+
   $submit = _entityspice_entity_form_submit($machine_name, $f, $fs);
   return $submit;
 }
 
 /**
- * @see _entityspice_entity_delete_form().
+ * Form callback: confirmation form for deleting an entity.
  */
-function <?php echo $a['machine_name'] ?>_delete_form($f, &$fs, $entity) {
+function <?php echo $a['safe'] . $a['machine_name'] ?>_delete_form($f, &$fs, $entity) {
+  $module = '<?php echo $a['module'] ?>';
   $machine_name = '<?php echo $a['machine_name'] ?>';
-  $form = _entityspice_entity_delete_form($machine_name, $f, $fs, $entity);
+  $submit_callback = '<?php echo $a['safe'] . $a['machine_name'] ?>_delete_form_submit';
 
-  return $form;
+  if (!_entityspice_entity_in_path_exists($machine_name, $entity)) {
+    return drupal_not_found();
+  }
+
+  $fs['entity'] = $entity;
+  $fs['entity_type'] = $machine_name;
+  $fs['build_info']['files']['form'] = drupal_get_path('module', $module) . '/' . $module . 'forms.inc';
+
+  $f['#submit'][] = $submit_callback;
+
+  $name = <?php echo $a['safe'] . $a['machine_name'] ?>_entity_name($entity);
+  $msg = t('Are you sure you want to delete entity @title?', ['@title' => $name]);
+  return confirm_form($f,
+    $msg,
+    entity_uri($machine_name, $entity),
+    '<p>' . t('Deleting this entity cannot be undone.') . '</p>',
+    t('Delete'),
+    t('Cancel'),
+    'confirm'
+  );
 }
 
 /**
- * @see _entityspice_entity_form_entity_delete_form_submit().
+ * Submit callback for entity delete form.
  */
-function <?php echo $a['machine_name'] ?>_delete_form_submit($f, &$fs) {
+function <?php echo $a['safe'] . $a['machine_name'] ?>_delete_form_submit($f, &$fs) {
   $machine_name = '<?php echo $a['machine_name'] ?>';
-  $submit = _entityspice_entity_form_entity_delete_form_submit($machine_name, $f, $fs);
-  return $submit;
+  $redirect = <?php echo $a['entity delete redirect']; ?>
+
+  $entity = $fs['entity'];
+  $id = <?php echo $a['safe'] . $a['machine_name'] ?>_entity_id($entity);
+  $name = <?php echo $a['safe'] . $a['machine_name'] ?>_entity_name($entity);
+
+  if(<?php echo $a['machine_name'] ?>_delete($id)) {
+    drupal_set_message(t('@name has been deleted.', ['@name' => $name]));
+    watchdog($etype, 'deleted entity @name.', $name, WATCHDOG_NOTICE);
+    $fs['redirect'] = $redirect;
+  }
+  else {
+    drupal_set_message(t('@name could not be deleted.', ['@name' => $name]), 'error');
+  }
 }
 
 <?php if($a['has_bundle']): ?>

@@ -140,7 +140,7 @@ function _<?php echo $a['machine_name'] ?>_admin_menu_map() {
 
   $map[$path]['parent'] = $i['parent'];
   $map[$path]['arguments'][][$name] =
-    _entityspice_entity_get_bundles_names($machine_name, FALSE);
+    <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles_names();
 
   return $map;
 }

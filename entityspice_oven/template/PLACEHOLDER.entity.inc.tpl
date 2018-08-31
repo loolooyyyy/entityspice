@@ -23,7 +23,7 @@ function <?php echo $a['machine_name'] ?>_load_multiple(array $ids = [], array $
 }
 
 /**
- * @see _entityspice_entity_delete().
+ * Deletes an entity by ID.
  */
 function <?php echo $a['machine_name'] ?>_delete($id) {
   return <?php echo $a['machine_name'] ?>_delete_multiple([$id]);
@@ -111,15 +111,11 @@ function <?php echo $a['machine_name'] ?>_entity_info() {
   return _entityspice_entity_info("<?php print $a['machine name'] ?>");
 }
 
-/**
- * Makes sure entity exists.
- *
- * @param mixed $entity entity id or entity object with an id.
- *
- * @return bool true if entity exists with the given id.
- */
-function _entityspice_entity_exists_in_db($entity_or_id) {
-  $id = is_object($entity) ? $entity->getID() : $entity;
-  // TODO!
-  return entity_load("<?php echo $a['machine_name'] ?>", [$id]);
+function <?php echo $a['safe'] . $a['machine_name'] ?>_entity_name($entity) {
+  // WARN always return check plained.
+  return '?';
+}
+
+function <?php echo $a['safe'] . $a['machine_name'] ?>_entity_id($entity) {
+  throw new RuntimeException('not supported');
 }

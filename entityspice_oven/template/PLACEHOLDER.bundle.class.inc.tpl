@@ -127,16 +127,16 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_save($bundle) {
 // ____________________________________________________________________________________________________________________
 
 /**
-* @see _entityspice_entity_get_bundles().
-*/
+ * Gets an array of all bundles, keyed by the name.
+ */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles() {
   $bundle_machine_name = '<?php echo $a['bundle machine name'] ?>';
   return entity_load_multiple_by_name($bundle_machine_name);
 }
 
 /**
-* @see _entityspice_entity_get_bundles_names().
-*/
+ * Generate a list of bundle names of a given entity type.
+ */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles_names() {
   $bundles = <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles();
   return array_keys($bundles);
