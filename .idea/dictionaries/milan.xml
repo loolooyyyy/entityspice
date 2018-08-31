@@ -3,6 +3,7 @@
     <words>
       <w>alphanum</w>
       <w>chdir</w>
+      <w>clbk</w>
       <w>datahandler</w>
       <w>datepicker</w>
       <w>dest</w>

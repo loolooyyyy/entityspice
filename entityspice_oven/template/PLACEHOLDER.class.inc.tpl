@@ -11,48 +11,15 @@
 class <?php echo $a['machine_camel'] ?> extends Entity {
   const _entity_type = <?php print $a['type_const'] ?>;
 
-<?php if($a['has_title']): ?>
-  public $title = NULL;
-<?php endif; ?>
-
 <?php if($a['has_bundle']): ?>
   public $<?php print $a['bundle_name'] ?> = NULL;
 <?php endif; ?>
 
-<?php if($a['has_uid']): ?>
-  /**
-   * Id of user who owns the entity.
-   */
-  public $<?php print $a['uid_name'] ?> = NULL;
-<?php endif; ?>
-
-
-<?php if($a['has_created']): ?>
-  /**
-   * The date entity was created on (UNIX timestamp).
-   */
-  public $<?php print $a['created_name'] ?> = NULL;
-<?php endif; ?>
-
-<?php if($a['has_updated']): ?>
-  /**
-   * The date entity was updated on (UNIX timestamp).
-   */
-  public $<?php print $a['updated_name'] ?> = NULL;
-<?php endif; ?>
+  // TODO custom prop
 
   public function __construct(array $values = []) {
     parent::__construct($values, $this::_entity_type);
   }
-
-<?php if($a['has_uid']): ?>
-  /**
-   * Set UID of user who owns this entity.
-   */
-  public function setOwner($<?php print $a['uid_name'] ?>) {
-    $this-><?php print $a['uid_name'] ?> = $<?php print $a['uid_name'] ?>;
-  }
-<?php endif; ?>
 
   final protected function defaultUri() {
     $base = "<?php echo $a['uri base']; >";

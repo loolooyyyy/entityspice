@@ -75,10 +75,6 @@ interface EntitySpiceEntityConfig {
 
   function bundleAccessCallback();
 
-  function bundleAdminFile();
-
-  function hasBundleAdminFile();
-
   function bundleFormSubmitDelete();
 
   function bundleSubmitDelete();
@@ -146,21 +142,11 @@ interface EntitySpiceEntityConfig {
 
   // ______________________________________________________________ ENTITY FORM
 
-  function hasFormsFile();
-
   function addForm();
 
   function editForm();
 
   function deleteForm();
-
-  function formsFile();
-
-  function entityFormSubmitCallback();
-
-  function entityDeleteFormSubmitCallback();
-
-  function entityFormValidationCallback();
 
 
   function parentAdminPath();
@@ -311,10 +297,6 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
     return $this->machine_name . '_delete_form';
   }
 
-  function formsFile() {
-    return '/' . $this->machine_name . ".forms.inc";
-  }
-
   function uriBase() {
     return str_replace('_', '-', $this->machine_name);
   }
@@ -358,18 +340,6 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
   }
 
 
-  function hasFormsFile() {
-    return TRUE;
-  }
-
-  function bundleAdminFile() {
-    return $this->machine_name . 'admin.inc';
-  }
-
-  function hasBundleAdminFile() {
-    return TRUE;
-  }
-
   function accessCallback() {
     return $this->machine_name . '_access';
   }
@@ -390,18 +360,6 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
 
   function bundleExistsCallback() {
     return $this->machine_name . '_get_bundles';
-  }
-
-  function entityFormSubmitCallback() {
-    return $this->machine_name . '_form_submit';
-  }
-
-  function entityDeleteFormSubmitCallback() {
-    return $this->machine_name . '_delete_form_submit';
-  }
-
-  function entityFormValidationCallback() {
-    return $this->machine_name . '_form_validate';
   }
 
 

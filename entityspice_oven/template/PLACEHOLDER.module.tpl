@@ -11,7 +11,6 @@ require_once dirname(__FILE__) . '/<?php echo $a['machine_name'] ?>.forms.inc';
 class <?php echp $a['exception class'] > extends RuntimeException {
 }
 
-
 /**
  * Implements hook_permission().
  */
@@ -20,16 +19,7 @@ function <?php echo $a['machine_name'] ?>_permission() {
   return $permissions;
 }
 
-/**
- * Implements hook_entityspice_info().
- */
-function <?php echo $a['machine_name'] ?>_entityspice_info() {
-  $info['<?php print $a['type_const'] ?>'] = array();
-  return $info;
-}
-
-
 function <?php echo $a['machine_name'] ?>_entity_access($op, $entity = NULL, $account = NULL) {
-  $access = _entityspice_entity_access('<?php print $a['type_const'] ?>', $op, $entity, $account);
+  $access = _entityspice_entity_access('<?php print $a['machine_name'] ?>', $op, $entity, $account);
   return $access;
 }

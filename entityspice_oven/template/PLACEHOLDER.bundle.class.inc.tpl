@@ -83,7 +83,8 @@ class <?php print $a['machine_camel'] ?>BundleUIController extends EntityDefault
 * @return \Entity created bundle.
 */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_create(array $values = []) {
-  return entity_get_controller('<?php echo $a['bundle machine name'] ?>')->create($values);
+  $bundle_machine_name = '<?php echo $a['bundle machine name'] ?>';
+  return entity_get_controller($bundle_machine_name)->create($values);
 }
 
 /**
@@ -95,10 +96,13 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_create(array $valu
 *   An bundle entity array or FALSE if $name does not exist.
 */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_load($name) {
-  $bundles = entity_load_multiple_by_name("<? echo $a["bundle machine name"]>", [$name]);
+  $bundle_machine_name = '<?php echo $a['bundle machine name'] ?>';
+
+  $bundles = entity_load_multiple_by_name($bundle_machine_name, [$name]);
   foreach ($bundles as $bundle) {
     return $bundle;
   }
+
   throw new <?php echo $a['exception class'] >('no such bundle: ' . $name);
 }
 
@@ -126,7 +130,8 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_save($bundle) {
 * @see _entityspice_entity_get_bundles().
 */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles() {
-  return entity_load_multiple_by_name("<? echo $a["bundle machine name"]>");
+  $bundle_machine_name = '<?php echo $a['bundle machine name'] ?>';
+  return entity_load_multiple_by_name($bundle_machine_name);
 }
 
 /**
@@ -150,7 +155,8 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles_options_list(
 }
 
 /**
-*/
+ * TODO
+ */
 function <?php echo $a['safe'] . $a['machine_name'] ?>_bundle_access($op, $bundle = NULL, $user = NULL) {
-  throw new RuntimeException('unsupported');
+  return $GLOBALS['user']->uid === 1;
 }
