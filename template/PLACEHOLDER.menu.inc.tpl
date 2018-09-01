@@ -26,16 +26,16 @@ function <?php echo $a['machine_name'] ?>_menu() {
   $items[$root . '/add'] = [
     'title' => 'Add a ' . $human_name,
     'description' => 'Add a new ' . $human_name,
-<?php if($a['has bundle']) >
+<?php if($a['has bundle']): ?>
     'page callback' => $s_name . '_bundles_list_page',
-<?php else >
+<?php else: ?>
     'page callback' => $s_name . '_add_page',
-<?php endif; >
+<?php endif; ?>
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => ["add $machine_name"],
   ];
 
-  <?php if($a['has bundle']) >
+  <?php if($a['has bundle']): ?>
   foreach ($einfo['bundles'] as $bun_name => $bundle) {
     $items[$root . '/add/' . $bun_name] = [
       'title' => $bundle['label'],
@@ -47,7 +47,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
       'access arguments' => ['add ' . $machine_name . ' : ' . $bun_name],
     ];
   }
-  <?php endif; >
+  <?php endif; ?>
 
 
   // Find where the character '%' will be in path, which represents the entity
@@ -97,12 +97,12 @@ function <?php echo $a['machine_name'] ?>_menu() {
     'access arguments' => ['delete', $arg_no],
   ];
 
-  <?php if($a['devel support']) ?>
+  <?php if($a['devel support']): ?>
   if (module_exists('devel')) {
     $items[$root . '/%/devel'] = [
       'title' => 'Devel',
       'page callback' => $s_name . '_devel_load_object',
-      'file' => '<?php echo $a['machine_name'] ?>.dev.inc',
+      'file' => '<?php echo $a['machine_name']; ?>.dev.inc',
       'page arguments' => [$arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
@@ -116,7 +116,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
     $items[$root . '/%/devel/render'] = [
       'title' => 'Render',
       'page callback' => $s_name . '_devel_render_object',
-      'file' => '<?php echo $a['machine_name'] ?>.dev.inc',
+      'file' => '<?php echo $a['machine_name']; ?>.dev.inc',
       'page arguments' => [$arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
@@ -209,7 +209,7 @@ function  <?php echo $a['safe'] . $a['machine_name'] ?>_entity_page() {
 /**
 * Page callback for adding an entity.
 */
-function <?php echo $a['safe'] . $a['machine_name'] ?>_add_page(<?php if $a['has bundle'] >$bundle<?php endif ?>) {
+function <?php echo $a['safe'] . $a['machine_name']; ?>_add_page(<?php if($a['has bundle']): ?>$bundle<?php endif ?>) {
   $s_name = '<?php echo $a['safe'] . $a['machine_name'] ?>';
   $module = '<?php echo $a['module'] ?>';
 
@@ -217,6 +217,6 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_add_page(<?php if $a['has
 
   module_load_include($module, 'forms.inc');
 
-  $entity = <?php echo $a['safe'] . $a['machine_name'] ?>_entity_create(<?php if $a['has bundle'] ?>['bundle' => $bundle]<?php endif?>);
+  $entity = <?php echo $a['safe'] . $a['machine_name']; ?>_entity_create(<?php if($a['has bundle']): ?>['bundle' => $bundle]<?php endif; ?>);
   return drupal_get_form("<?php echo $info['add form']; ?>", $entity);
 }

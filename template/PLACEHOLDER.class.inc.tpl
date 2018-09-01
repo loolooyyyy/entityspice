@@ -22,7 +22,7 @@ class <?php echo $a['machine_camel'] ?> extends Entity {
   }
 
   final protected function defaultUri() {
-    $base = "<?php echo $a['uri base']; >";
+    $base = "<?php echo $a['uri base']; ?>";
     return ['path' => $base . '/' . $this->identifier()];
   }
 
