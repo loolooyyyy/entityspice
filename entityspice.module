@@ -1,4 +1,8 @@
-<?php
+<?php /** @noinspection PhpDocSignatureInspection */
+/** @noinspection PhpUnusedParameterInspection */
+/** @noinspection PhpIncludeInspection */
+/** @noinspection PhpUndefinedFunctionInspection */
+/** @noinspection PhpUndefinedConstantInspection */
 
 require_once 'entityspice_error.inc';
 
@@ -14,6 +18,8 @@ require_once 'entityspice_error.inc';
  */
 class EntitySpiceConfig {
 
+  private $override;
+
   private $machine_name;
 
   private $label_name;
@@ -27,33 +33,6 @@ class EntitySpiceConfig {
    * @var string
    */
   private $safe;
-
-  /**
-   * @param $machine_name string machine name of entity this config belongs to.
-   */
-  public function __construct($machine_name) {
-    if (empty($machine_name)
-      || !is_string($machine_name)
-      || !ctype_alnum($machine_name)
-      || ctype_digit($machine_name[0])
-      || $machine_name[0] === '_') {
-      throw new RuntimeException("bad machine name: " .
-        (is_string($machine_name) ? $machine_name : 'NON_STRING_GIVEN'));
-    }
-
-    $this->safe = '_';
-    $this->machine_name = $machine_name;
-    $this->label_name = ucwords(str_replace('_', ' ', $machine_name));
-    $this->camel_name_upper_first = str_replace(' ', '', $this->label_name);
-  }
-
-  function module() {
-    return $this->machine_name;
-  }
-
-  function machineName() {
-    return $this->machine_name;
-  }
 
 
   /**
@@ -77,13 +56,56 @@ class EntitySpiceConfig {
     return $this->camel_name_upper_first;
   }
 
+  /**
+   * Do not override.
+   */
+  function sMachineName() {
+    return $this->safe . $this->machine_name;
+  }
+
+  /**
+   * @param $machine_name string machine name of entity this config belongs to.
+   * @param bool $safe whether if a string prepended to functions (usually
+   * underscore) to exclude them from global namespace, so accidentally a hook
+   * is not implemented.
+   */
+  public function __construct($machine_name, $safe = TRUE) {
+    if (empty($machine_name)
+      || !is_string($machine_name)
+      || !ctype_alnum($machine_name)
+      || ctype_digit($machine_name[0])
+      || $machine_name[0] === '_') {
+      throw new RuntimeException("bad machine name: " .
+        (is_string($machine_name) ? $machine_name : 'NON_STRING_GIVEN'));
+    }
+    if (is_bool($safe)) {
+      throw new RuntimeException('bad type for $safe');
+    }
+
+    // sanitize. so that we have description for everything.
+    foreach ($this->all() as $each) {
+      $this->description($each);
+    }
+
+    $this->override = [];
+    $this->safe = $safe ? '_' : '';
+    $this->machine_name = $machine_name;
+    $this->label_name = ucwords(str_replace('_', ' ', $machine_name));
+    $this->camel_name_upper_first = str_replace(' ', '', $this->label_name);
+  }
+
+
+  function machineName() {
+    return $this->machine_name;
+  }
+
 
   function humanName() {
     return $this->label_name;
   }
 
   function idKey() {
-    return "eid";
+    return "id";
   }
 
   function baseTable() {
@@ -122,18 +144,6 @@ class EntitySpiceConfig {
     return $this->machine_name . '_bundle';
   }
 
-  function bundleEntityClass() {
-    return $this->camel_name_upper_first . 'Bundle';
-  }
-
-  function bundleControllerClass() {
-    return $this->camel_name_upper_first . 'BundleController';
-  }
-
-  function bundleIdKey() {
-    return "bid";
-  }
-
   function bundleKeyName() {
     return "bid";
   }
@@ -142,7 +152,7 @@ class EntitySpiceConfig {
     return $this->machine_name . '_bundle';
   }
 
-  function bundleLockOnExists() {
+  function bundleHasLock() {
     return TRUE;
   }
 
@@ -156,10 +166,6 @@ class EntitySpiceConfig {
 
   function bundleDeleteRedirect() {
     return 'admin/structure/' . $this->machine_name;
-  }
-
-  function bundleExistsCallback() {
-    return $this->machine_name . '_get_bundles';
   }
 
   function isBundleFieldable() {
@@ -212,7 +218,7 @@ class EntitySpiceConfig {
   }
 
 
-  // ______________________________________________________________________ ETC
+  // ______________________________________________________________________ IEF
 
   function hasInlineEntityFormSupport() {
     return TRUE;
@@ -234,45 +240,230 @@ class EntitySpiceConfig {
   }
 
   final function nonOverridable() {
-    return ['safe', 'camelNameLcFirst', 'camelNameUcFirst'];
+    return [
+      'safe',
+      'camelNameLcFirst',
+      'camelNameUcFirst',
+      'machineName',
+      'sMachineName',
+    ];
   }
 
-}
-
-/**
- * Why wrap and use __call and so much trouble?
- *
- * Because I later realized I need this. And I'm not going to user arrays over
- * object. An object clearly defines the keys (by using methods);
- *
- * Magic getter is not used. Because F*** this ****.
- */
-class EntitySpiceConfigWrapper extends EntitySpiceConfig {
-
-  private $cfg;
-
-  private $override;
-
-  function __construct(EntitySpiceConfig $cfg) {
-    parent::__construct($cfg->machineName());
-    $this->cfg = $cfg;
-    $this->override = [];
-  }
-
+  /**
+   * Why use __call and so much trouble?
+   *
+   * Because I later realized I need this. And I'm not going to user arrays over
+   * object. An object clearly defines the keys (by using methods);
+   *
+   * Magic getter is not used. Because F*** this ****.
+   */
   function __call($name, $arguments) {
     return in_array($name, $this->override, TRUE)
       ? $this->override[$name]
-      : call_user_func([$this->cfg, $name]);
+      : call_user_func([$this, $name]);
   }
 
   function override($name, $value) {
     if (!is_string($name) || !is_string($value)) {
       throw new RuntimeException('bad data type, need string');
     }
-    if (!in_array($name, parent::all(), TRUE)) {
+    if (!in_array($name, $this->all(), TRUE)) {
       throw new RuntimeException('no such key: ' . $name);
     }
+    if (in_array($name, $this->nonOverridable())) {
+      throw new RuntimeException('key can not be overridden: ' . $name);
+    }
     $this->override[$name] = $value;
+  }
+
+  function overridable() {
+    $all = $this->all();
+    $none = $this->nonOverridable();
+    $diff = array_diff($all, $none);
+    return $diff;
+  }
+
+  /**
+   * Bad idea.
+   *
+   * returns an array: ['description', 'default value']
+   */
+  function description($name) {
+    $dummy = new EntitySpiceConfig($this->machine_name);
+    switch ($name) {
+      case 'safe':
+        return [
+          'whether if a string prepended to functions (usually ' .
+          'underscore)to exclude them from global namespace, so ' .
+          ' a hook is not accidentally implemented.',
+          'TRUE',
+        ];
+
+
+      case 'camelNameLcFirst':
+        return ['machineNameButLikeThis', $dummy->camelNameLcFirst()];
+
+      case 'camelNameUcFirst':
+        return ['MachineNameButLikeThis', $dummy->camelNameUcFirst()];
+
+      case 'sMachineName':
+        return [
+          'safe() and machineName() concatenated. see description for [safe]',
+          $dummy->sMachineName(),
+        ];
+
+      case 'machineName':
+        return ['machine name for the generated entity type.', 'N/A'];
+
+      case 'humanName':
+        return [
+          'human readable name (label) for the generated entity type.',
+          $dummy->humanName(),
+        ];
+
+      case 'idKey':
+        return [
+          'id property on entity object (just like nid on $node->nid)',
+          $dummy->idKey(),
+        ];
+
+      case 'baseTable':
+        return [
+          'name of the database table',
+          $dummy->baseTable(),
+        ];
+
+      case 'isFieldable':
+        return [
+          'whether if generated entity type supports fields.',
+          $dummy->isFieldable(),
+        ];
+
+      case 'accessControlledActions':
+        return [
+          'name of supported actions on entity, whose permission is ' .
+          'controlled, such as view, create...',
+          implode(', ', $dummy->accessControlledActions()),
+        ];
+
+      case 'hasDevelSupport':
+        return [
+          'whether if generated entity type directly supports devel module ' .
+          '(a devel page is accessible for each entity, just like ' .
+          '/node/NID/devel',
+          $dummy->hasDevelSupport(),
+        ];
+
+      case 'hasCanDeleteHook':
+        return [
+          'whether if a hook_ENTITY_TYPE_can_delete() is added, so other ' .
+          ' modules can decide and prevent an entity from being deleted',
+          $dummy->hasCanDeleteHook(),
+        ];
+
+      case 'hasBundle':
+        return [
+          'whether if entity type support bundles',
+          $dummy->hasBundle(),
+        ];
+
+      case 'bundleMachineName':
+        return [
+          'machine name of entity type\'s bundle, if you do not like MACHINE_NAME_bundle',
+          $dummy->bundleMachineName(),
+        ];
+
+      case 'bundleKeyName':
+        return [
+          'name of the property denoting an entity\'s bundle, on the entity object',
+          $dummy->bundleKeyName(),
+        ];
+
+      case 'bundleTable':
+        return [
+          'if bundle is an entity, the table holding the bundles',
+          $dummy->bundleTable(),
+        ];
+
+      case 'bundleHasLock':
+        return [
+          'whether if bundles are lockable, so they can not be deleted',
+          $dummy->bundleLockOnExists(),
+        ];
+
+      case 'bundleIsEntity':
+        return [
+          'whether if bundles are entity themselves',
+          $dummy->bundleIsEntity(),
+        ];
+
+      case 'bundleSubmitRedirect':
+        return [
+          'the uri to redirect to, when a new bundle is saved',
+          $dummy->bundleSubmitRedirect(),
+        ];
+
+      case 'bundleDeleteRedirect':
+        return [
+          'the uri to redirect to, when a bundle is deleted',
+          $dummy->bundleDeleteRedirect(),
+        ];
+
+      case 'isBundleFieldable':
+        return [
+          'whether if bundles are fieldable themselves',
+          $dummy->isBundleFieldable(),
+        ];
+
+      case 'hasRevision':
+        return [
+          'whether if the entity is revisionable',
+          $dummy->hasRevision(),
+        ];
+
+      case 'revisionTable':
+        return [
+          'name of the table holding entity revisions',
+          $dummy->revisionTable(),
+        ];
+
+      case 'revisionKeyName':
+        return [
+          'name of the key on entity object holding it\'s revision id',
+          $dummy->revisionKeyName(),
+        ];
+
+      case 'hasRevisionLog':
+        return [
+          'whether if each revision has a log (stored in DB)',
+          $dummy->hasRevisionLog(),
+        ];
+
+      case 'parentAdminPath':
+        return [
+          'the root path for entity type\'s administration pages',
+          $dummy->parentAdminPath(),
+        ];
+
+      case 'parentUserlandPath':
+        return [
+          'the root path for entities themselves',
+          $dummy->parentUserlandPath(),
+        ];
+
+      case 'entityDeleteRedirect':
+        return [
+          'the path to redirect to when an entity is deleted',
+          $dummy->entityDeleteRedirect(),
+        ];
+
+      case 'hasInlineEntityFormSupport':
+        return [
+          'whether if inline entity form module is supported',
+          $dummy->hasInlineEntityFormSupport(),
+        ];
+    }
+    throw new RuntimeException('no description for: ' . $name);
   }
 
 }
@@ -294,15 +485,16 @@ function entityspice_drush_help($section) {
 function entityspice_drush_command() {
   $items['entityspice-cook'] = [
     'aliases' => ['cook'],
-    'callback' => '_entityspice_drush_ekran',
+    'callback' => '_entityspice_drush_pre_ekran',
     'description' => 'Create a module containing an entity (cook an entity type).',
     'arguments' => ['machine-name' => 'Machine name of generated entity.'],
     'options' => [],
     'examples' => [],
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
   ];
-  foreach (_entityspice_tokens() as $name => $token) {
-    if ($name !== _ENTITYSPICE_MACHINE) {
+  $dummy = new EntitySpiceConfig('dummy');
+  foreach ($dummy->overridable() as $name => $token) {
+    if ($name !== 'machine_name') {
       $items['entityspice-cook']['options'][$name] = $token['description'];
     }
   }
@@ -354,7 +546,7 @@ function _entityspice_drush_presume($msg) {
  * @return bool true on success, false otherwise.
  * @throws \Exception
  */
-function _entityspice_drush_ekran($machine_name = NULL) {
+function _entityspice_drush_pre_ekran($machine_name = NULL) {
   // ============================================================== machine name
   if ($err = _entityspice_token_validate('machine_name', $machine_name)) {
     drush_set_error('bad machine name: ' . _entityspice_error_msg($err));
@@ -364,7 +556,8 @@ function _entityspice_drush_ekran($machine_name = NULL) {
     drush_set_error("a module named [$machine_name] already exists");
     return FALSE;
   }
-  $tokens[_ENTITYSPICE_MACHINE] = $machine_name;
+
+  $cfg = new EntitySpiceConfig($machine_name);
 
   // ================================================== Handle drush cli options
   foreach (_entityspice_tokens() as $name => $token) {
