@@ -1,23 +1,607 @@
 <?php
 
-const ENTITYSPICE_DANGEROUS_DEBUG = FALSE;
+require_once 'entityspice_error.inc';
 
-require_once 'config.inc';
-require_once 'entityspice.inc';
-if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
-  require_once 'entityspice.drush.inc';
-}
 
-if (ENTITYSPICE_DANGEROUS_DEBUG) {
-  require_once 'dev_datahandler.class.inc';
+/**
+ * This implementation does NOT call any of subclass methods. Do NOT expect
+ * behaviour of a method to change, overriding some other method.
+ *
+ * None of methods declared in this class or implementation should take a key,
+ * and nothing other than simple values indication support for a future should
+ * be returned. It must be a simple immutable value class with no logic. Else,
+ * it is a design error, a disaster.
+ */
+class EntitySpiceConfig {
+
+  private $machine_name;
+
+  private $label_name;
+
+  private $camel_name_upper_first;
+
+  /**
+   * A string prepended to functions (usually underscore) to exclude them from
+   * global namespace, so accidentally a hook is not implemented.
+   *
+   * @var string
+   */
+  private $safe;
+
+  /**
+   * @param $machine_name string machine name of entity this config belongs to.
+   */
+  public function __construct($machine_name) {
+    if (empty($machine_name)
+      || !is_string($machine_name)
+      || !ctype_alnum($machine_name)
+      || ctype_digit($machine_name[0])
+      || $machine_name[0] === '_') {
+      throw new RuntimeException("bad machine name: " .
+        (is_string($machine_name) ? $machine_name : 'NON_STRING_GIVEN'));
+    }
+
+    $this->safe = '_';
+    $this->machine_name = $machine_name;
+    $this->label_name = ucwords(str_replace('_', ' ', $machine_name));
+    $this->camel_name_upper_first = str_replace(' ', '', $this->label_name);
+  }
+
+  function module() {
+    return $this->machine_name;
+  }
+
+  function machineName() {
+    return $this->machine_name;
+  }
+
+
+  /**
+   * Do not override.
+   */
+  function safe() {
+    return $this->safe;
+  }
+
+  /**
+   * Do not override.
+   */
+  function camelNameLcFirst() {
+    return lcfirst($this->camel_name_upper_first);
+  }
+
+  /**
+   * Do not override.
+   */
+  function camelNameUcFirst() {
+    return $this->camel_name_upper_first;
+  }
+
+
+  function humanName() {
+    return $this->label_name;
+  }
+
+  function idKey() {
+    return "eid";
+  }
+
+  function baseTable() {
+    return $this->machine_name;
+  }
+
+  function isFieldable() {
+    return TRUE;
+  }
+
+  function accessControlledActions() {
+    return [
+      'administer',
+      'create',
+      'delete',
+      'view',
+      'archive',
+    ];
+  }
+
+  function hasDevelSupport() {
+    return TRUE;
+  }
+
+  function hasCanDeleteHook() {
+    return FALSE;
+  }
+
+  // ___________________________________________________________________ BUNDLE
+
+  function hasBundle() {
+    return TRUE;
+  }
+
+  function bundleMachineName() {
+    return $this->machine_name . '_bundle';
+  }
+
+  function bundleEntityClass() {
+    return $this->camel_name_upper_first . 'Bundle';
+  }
+
+  function bundleControllerClass() {
+    return $this->camel_name_upper_first . 'BundleController';
+  }
+
+  function bundleIdKey() {
+    return "bid";
+  }
+
+  function bundleKeyName() {
+    return "bid";
+  }
+
+  function bundleTable() {
+    return $this->machine_name . '_bundle';
+  }
+
+  function bundleLockOnExists() {
+    return TRUE;
+  }
+
+  function bundleIsEntity() {
+    return TRUE;
+  }
+
+  function bundleSubmitRedirect() {
+    return 'admin/structure/' . $this->machine_name;
+  }
+
+  function bundleDeleteRedirect() {
+    return 'admin/structure/' . $this->machine_name;
+  }
+
+  function bundleExistsCallback() {
+    return $this->machine_name . '_get_bundles';
+  }
+
+  function isBundleFieldable() {
+    return TRUE;
+  }
+
+
+  // _________________________________________________________________ REVISION
+
+  function hasRevision() {
+    return FALSE;
+  }
+
+  function revisionTable() {
+    return $this->machine_name . '_revision';
+  }
+
+  function revisionKeyName() {
+    return 'rid';
+  }
+
+  function ridKey() {
+    return "rid";
+  }
+
+  function hasRevisionLog() {
+    return TRUE;
+  }
+
+  // _____________________________________________________________________ PATH
+
+  function parentAdminPath() {
+    return 'admin/structure/' . $this->machine_name;
+  }
+
+  function parentUserlandPath() {
+    return $this->machine_name;
+  }
+
+  function uriBase() {
+    return str_replace('_', '-', $this->machine_name);
+  }
+
+  function entityDeleteRedirect() {
+    return '/';
+  }
+
+  function uriCallback() {
+    throw new RuntimeException("uriCallback");
+  }
+
+
+  // ______________________________________________________________________ ETC
+
+  function hasInlineEntityFormSupport() {
+    return TRUE;
+  }
+
+  function inlineInlineEntityForm() {
+    return $this->camel_name_upper_first . 'InlineEntityFormController';
+  }
+
+
+  // ______________________________________________________________________ ETC
+
+  final function php() {
+    return '<' . '?' . 'php';
+  }
+
+  final function all() {
+    return get_class_methods('EntitySpiceConfig');
+  }
+
+  final function nonOverridable() {
+    return ['safe', 'camelNameLcFirst', 'camelNameUcFirst'];
+  }
+
 }
 
 /**
- * Implements hook_permission().
+ * Why wrap and use __call and so much trouble?
+ *
+ * Because I later realized I need this. And I'm not going to user arrays over
+ * object. An object clearly defines the keys (by using methods);
+ *
+ * Magic getter is not used. Because F*** this ****.
  */
-function entityspice_permission() {
-  $p['administer entityspice'] = [
-    'title' => 'administer entityspice',
-  ];
-  return $p;
+class EntitySpiceConfigWrapper extends EntitySpiceConfig {
+
+  private $cfg;
+
+  private $override;
+
+  function __construct(EntitySpiceConfig $cfg) {
+    parent::__construct($cfg->machineName());
+    $this->cfg = $cfg;
+    $this->override = [];
+  }
+
+  function __call($name, $arguments) {
+    return in_array($name, $this->override, TRUE)
+      ? $this->override[$name]
+      : call_user_func([$this->cfg, $name]);
+  }
+
+  function override($name, $value) {
+    if (!is_string($name) || !is_string($value)) {
+      throw new RuntimeException('bad data type, need string');
+    }
+    if (!in_array($name, parent::all(), TRUE)) {
+      throw new RuntimeException('no such key: ' . $name);
+    }
+    $this->override[$name] = $value;
+  }
+
 }
+
+// ______________________________________________________________________ DRUSH
+
+/**
+ * Implements hook_drush_help().
+ *
+ * @param $section
+ */
+function entityspice_drush_help($section) {
+  // @TODO
+}
+
+/**
+ * Implements hook_drush_command().
+ */
+function entityspice_drush_command() {
+  $items['entityspice-cook'] = [
+    'aliases' => ['cook'],
+    'callback' => '_entityspice_drush_ekran',
+    'description' => 'Create a module containing an entity (cook an entity type).',
+    'arguments' => ['machine-name' => 'Machine name of generated entity.'],
+    'options' => [],
+    'examples' => [],
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
+  ];
+  foreach (_entityspice_tokens() as $name => $token) {
+    if ($name !== _ENTITYSPICE_MACHINE) {
+      $items['entityspice-cook']['options'][$name] = $token['description'];
+    }
+  }
+  return $items;
+}
+
+/**
+ * Asks user for yes or no and parse input.
+ *
+ * Accepts all forms of yes and no, y, Y, 1, t, true, TRUE, false, FALSE, ...
+ *
+ * @param string $msg message to display as prompt.
+ *
+ * @return bool true if user said yes false otherwise.
+ */
+function _entityspice_drush_presume($msg) {
+  drush_print_prompt($msg . " (Y/n): ", 0);
+  if (drush_get_context('DRUSH_AFFIRMATIVE')) {
+    // Automatically accept confirmations if the --yes argument was supplied.
+    drush_print("y");
+    return TRUE;
+  }
+  elseif (drush_get_context('DRUSH_NEGATIVE')) {
+    // Automatically cancel confirmations if the --no argument was supplied.
+    drush_print("n");
+    return FALSE;
+  }
+  else {
+    $stdin = fopen("php://stdin", "r");
+    while ($line = fgets($stdin)) {
+      $line = strtolower(trim($line));
+      if (empty($line) || $line === 'y' || $line === 1 || $line[0] === 't' || $line === '1') {
+        return TRUE;
+      }
+      if ($line === 'n' || $line === 0 || $line[0] === 'f' || $line === '0') {
+        return FALSE;
+      }
+      drush_print_prompt($msg . " (Y/n): ", 0);
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * drush command callback.
+ *
+ * @param string $machine_name
+ *
+ * @return bool true on success, false otherwise.
+ * @throws \Exception
+ */
+function _entityspice_drush_ekran($machine_name = NULL) {
+  // ============================================================== machine name
+  if ($err = _entityspice_token_validate('machine_name', $machine_name)) {
+    drush_set_error('bad machine name: ' . _entityspice_error_msg($err));
+    return FALSE;
+  }
+  if (module_exists($machine_name)) {
+    drush_set_error("a module named [$machine_name] already exists");
+    return FALSE;
+  }
+  $tokens[_ENTITYSPICE_MACHINE] = $machine_name;
+
+  // ================================================== Handle drush cli options
+  foreach (_entityspice_tokens() as $name => $token) {
+    // Machine name is already set by a mandatory argument.
+    if ($name === _ENTITYSPICE_MACHINE) {
+      continue;
+    }
+    $arg = drush_get_option($name, NULL);
+    if ($arg === NULL) {
+      continue;
+    }
+    $arg = _entityspice_token_post_process($token['validation_policy'], $arg);
+    if ($err = _entityspice_token_validate($name, $arg)) {
+      drush_set_error('bad value: ' . $arg . ', ' . _entityspice_error_msg($err));
+      return FALSE;
+    }
+    else {
+      $tokens[$name] = $arg;
+    }
+  }
+
+  // ======================================================= Handle drush prompt
+  if (_entityspice_drush_presume('do you want to use default options?')) {
+    $tokens = _entityspice_fill_default_values($machine_name, $tokens);
+  }
+  else {
+    // Uses 'prompt', 'label', 'description' in tokens array.
+    drush_log('Enter "?" to see each arguments help, ' .
+      'leave empty for default value.' . "\n", 'ok');
+    foreach (_entityspice_tokens() as $name => $token) {
+      if (isset($tokens[$name]) || !$token['prompt']) {
+        continue;
+      }
+      while (TRUE) {
+        $value = drush_prompt($token['label'] . ' (? for help)',
+          _entityspice_token_default_value($machine_name, $name),
+          TRUE);
+        if ($value === '?') {
+          drush_log($token['description'] . "\n", 'ok');
+          continue;
+        }
+        $value = _entityspice_token_post_process($token['validation_policy'], $value);
+        if ($err = _entityspice_token_validate($name, $value)) {
+          drush_log(_entityspice_error_msg($err), 'error');
+        }
+        else {
+          $tokens[$name] = $value;
+          break;
+        }
+      };
+    }
+  }
+
+  // ======================================================= Find dest directory
+  $dest = _entityspice_pm_download_destination('module') . '/' . $machine_name;
+  if (is_dir($dest)) {
+    drush_set_error("destination already exists: $dest, installing into an existing" .
+      ' destination is dangerous and not supported');
+    return FALSE;
+  }
+
+  // ===================================================================== EKRAN
+  $tmp = drush_tempdir() . '/' . $machine_name;
+  if (!drush_mkdir($tmp)) {
+    drush_log('could not mkdir tmp directory: ' . $tmp);
+    return FALSE;
+  }
+  if ($err = _entityspice_ekran($tmp, $tokens)) {
+    drush_log("failed: $err", 'error');
+    return FALSE;
+  }
+
+  if (!drush_move_dir($tmp, $dest)) {
+    drush_log("could not mv $tmp to $dest", 'error');
+    return FALSE;
+  }
+
+  drush_log('FIN, your beautiful entity type is generated at: ' . $dest, 'ok');
+  return TRUE;
+}
+
+// _______________________________________________________________________ MAIN
+
+/**
+ * Before calling:
+ *  - ensure valid machine name.
+ *  - ensure no module with that machine name exist.
+ *  - ensure all token values are provided.
+ *  - ensure all tokens have valid values.
+ */
+function _entityspice_render(EntitySpiceConfig $tokens) {
+  $files = [];
+  foreach ([
+             'access.inc',
+             'admin.inc',
+             'bundle.class.inc',
+             'class.inc',
+             'dev.inc',
+             'display.inc',
+             'entity.inc',
+             'info',
+             'inline_entity_form.inc',
+             'install',
+             'menu.inc',
+             'module',
+           ] as $f) {
+    if ($f === 'bundle.class.inc' && !$tokens->hasBundle()) {
+      continue;
+    }
+    if ($f === 'inline_entity_form.inc' && !$tokens->hasInlineEntityFormSupport()) {
+      continue;
+    }
+    if ($f === 'dev.inc' && !$tokens->hasDevelSupport()) {
+      continue;
+    }
+
+    ob_start();
+    require "template/PLACEHOLDER.$f.tpl";
+    $files[$f] = ob_get_contents();
+    ob_end_clean();
+  }
+  return $files;
+}
+
+// -----------
+
+/**
+ * Stolen from drush pm-download, to find where to put generated module in.
+ *
+ * So that there is no hard dependency on drush.
+ *
+ * Only used by function _entityspice_pm_download_destination().
+ */
+function _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitepath, $create = FALSE) {
+  $destination = $type . 's';
+  // Prefer /contrib if it exists.
+  if ($sitepath) {
+    $destination = $sitepath . '/' . $destination;
+  }
+  $contrib = $destination . '/contrib';
+  if (is_dir($contrib)) {
+    $destination = $contrib;
+  }
+  if ($create) {
+    drush_log(dt('Attempting to create destination directory at !dir', ['!dir' => $destination]));
+    drush_mkdir($destination, TRUE);
+  }
+  if (is_dir($destination)) {
+    drush_log(dt('Using destination directory !dir', ['!dir' => $destination]));
+    return $destination;
+  }
+  drush_log(dt('Could not find destination directory at !dir', ['!dir' => $destination]));
+  return FALSE;
+}
+
+/**
+ * Stolen from drush pm-download, to find where to put generated module in.
+ *
+ * So that there is no hard dependency on drush.
+ */
+function _entityspice_pm_download_destination($type) {
+  $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
+  $site_root = drush_get_context('DRUSH_DRUPAL_SITE_ROOT');
+  $full_site_root = (empty($drupal_root) || empty($site_root)) ? '' : $drupal_root . '/' . $site_root;
+  $sitewide = empty($drupal_root) ? '' : $drupal_root . '/' . drush_drupal_sitewide_directory();
+
+  $in_site_directory = FALSE;
+  // Check if we are running within the site directory.
+  if (strpos(realpath(drush_cwd()), realpath($full_site_root)) !== FALSE || (drush_get_option('use-site-dir', FALSE))) {
+    $in_site_directory = TRUE;
+  }
+
+  $destination = '';
+  // Attempt 1: If we are in a specific site directory, and the destination
+  // directory already exists, then we use that.
+  if (empty($destination) && $site_root && $in_site_directory) {
+    $create_dir = drush_get_option('use-site-dir', FALSE);
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $full_site_root, $create_dir);
+  }
+  // Attempt 2: If the destination directory already exists for
+  // the sitewide directory, use that.
+  if (empty($destination) && $drupal_root) {
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitewide);
+  }
+  // Attempt 3: If a specific (non default) site directory exists and
+  // the sitewide directory does not exist, then create destination
+  // in the site specific directory.
+  if (empty($destination) && $site_root && $site_root !== 'sites/default' && is_dir($full_site_root) && !is_dir($sitewide)) {
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $full_site_root, TRUE);
+  }
+  // Attempt 4: If sitewide directory exists, then create destination there.
+  if (empty($destination) && is_dir($sitewide)) {
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitewide, TRUE);
+  }
+  // Attempt 5: If site directory exists (even default), then create
+  // destination in that directory.
+  if (empty($destination) && $site_root && is_dir($full_site_root)) {
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $full_site_root, TRUE);
+  }
+  // Attempt 6: If we didn't find a valid directory yet (or we somehow found
+  // one that doesn't exist) we always fall back to the current directory.
+  if (empty($destination) || !is_dir($destination)) {
+    $destination = drush_cwd();
+  }
+
+  return $destination;
+}
+
+function _entityspice_ekran($target_dir, EntitySpiceConfig $tokens) {
+  if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
+    if (!drush_op('chdir', $target_dir)) {
+      return 'could not chdir into target: ' . $target_dir;
+    }
+    foreach (_entityspice_render($tokens) as $file => $text) {
+      $f = drush_op('fopen', 'w', $file);
+      if (!$f) {
+        drush_log('warning', 'could not open file for writing, dry_run? -> ' . $file);
+        continue;
+      }
+      drush_op('fwrite', $f, $text);
+      drush_op('fclose', $f);
+    }
+    return '';
+  }
+  else {
+    if (!chdir($target_dir)) {
+      return 'could not chdir into target: ' . $target_dir;
+    }
+    foreach (_entityspice_render($tokens) as $file => $text) {
+      $f = fopen($file, 'w');
+      if (!$f) {
+        return "could not create file: $file";
+      }
+      fwrite($f, $text);
+      fclose($f);
+    }
+    return '';
+  }
+}
+

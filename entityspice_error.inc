@@ -62,11 +62,9 @@ function _entityspice_error_msg($error_no) {
   return $msg;
 }
 
-function _entityspice_token_validate($token_name, $value) {
-  $tokens = _entityspice_tokens();
-  $token = $tokens[$token_name];
-  switch ($token['validation_policy']) {
-    case _ENTITYSPICE_MACHINE:
+function _entityspice_token_validate($type, $value) {
+  switch ($type) {
+    case 'machine_name':
       if (empty($value) || !($value)) {
         return _ENTITYSPICE_ERR_EMPTY;
       }
@@ -86,6 +84,11 @@ function _entityspice_token_validate($token_name, $value) {
       }
       break;
 
+    default:
+      throw new RuntimeException("don't know how to validate <$type>");
+  }
+
+  switch ($token['validation_policy']) {
     case _ENTITYSPICE_OVEN_MACHINE_CAMEL:
       if (_entityspice_token_validate(_ENTITYSPICE_MACHINE,
         @strtolower($value))) {
