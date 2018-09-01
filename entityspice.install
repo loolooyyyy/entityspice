@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * Implements hook_requirements().
+ *
+ * So that entityspice is not enabled in production.
+ *
+ * @param $phase
+ *
+ * @return array
+ */
+function entityspice_requirements($phase) {
+  return $phase === 'runtime'
+    ? [
+      'title' => 'Entityspice in Production',
+      'description' => 'Entityspice must NOT be enabled in production',
+      'severity' => REQUIREMENT_WARNING,
+    ]
+    : [];
+}

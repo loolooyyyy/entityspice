@@ -1,7 +1,0 @@
-name = Entityspice Oven
-description = Will cook new entity types for you. DO NOT ENABLE IN PRODUCTION. despite entityspice module, this module requires at lest php 5.6
-core = 7.x
-package = entity
-php = 5.6
-
-dependencies[] = entityspice

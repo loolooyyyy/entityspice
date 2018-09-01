@@ -49,11 +49,7 @@ function <?php echo $a['machine_name'] ?>_save($entity) {
 * Display an entity.
 */
 function <?php echo $a['machine_name'] ?>_view($entity, $view_mode = 'full') {
-  $machine_name = '<?php echo $a['machine_name'] ?>';
-  if ($entity = _entityspice_get_entity($machine_name, $entity)) {
-    return $entity->view($view_mode);
-  }
-  drupal_not_found();
+  return $entity->view($view_mode);
 }
 
 /**
@@ -70,11 +66,31 @@ function <?php echo $a['machine_name'] ?>_create(array $values = []) {
 }
 
 /**
- * @see _entityspice_field_extra_field_info().
+ * Implements hook_field_extra_field_info().
  */
 function <?php echo $a['machine_name'] ?>_field_extra_fields() {
+  // TODO custom prop
   $machine_name = '<?php echo $a['machine_name'] ?>';
-  return _entityspice_field_extra_field_info($machine_name);
+  $extra = [];
+// $bundles = NULL;
+// foreach ($bundles as $bundle => $info) {
+//   $extra[$machine_name][$bundle] = [
+//     'form' => [
+//       'title' => [
+//           'label' => t('Title'),
+//           'description' => t('Entity title'),
+//           'weight' => 0,
+//         ] + $form,
+//     ],
+//     'display' => [
+//         'title' => [
+//           'label' => t('Title'),
+//           'weight' => 0,
+//         ],
+//       ] + $display,
+//   ];
+// }
+  return $extra;
 }
 
 /**

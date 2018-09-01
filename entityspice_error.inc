@@ -12,7 +12,7 @@ const _ENTITYSPICE_ERR_ASCII = 256;
 
 const _ENTITYSPICE_OVEN_MAX_NAME_LEN = 64;
 
-function _entityspice_oven_error_msg($error_no) {
+function _entityspice_error_msg($error_no) {
   switch ($error_no) {
     case _ENTITYSPICE_ERR_NO_ERR:
       $msg = 'no error';
@@ -62,8 +62,8 @@ function _entityspice_oven_error_msg($error_no) {
   return $msg;
 }
 
-function _entityspice_oven_token_validate($token_name, $value) {
-  $tokens = _entityspice_oven_tokens();
+function _entityspice_token_validate($token_name, $value) {
+  $tokens = _entityspice_tokens();
   $token = $tokens[$token_name];
   switch ($token['validation_policy']) {
     case _ENTITYSPICE_MACHINE:
@@ -87,14 +87,14 @@ function _entityspice_oven_token_validate($token_name, $value) {
       break;
 
     case _ENTITYSPICE_OVEN_MACHINE_CAMEL:
-      if (_entityspice_oven_token_validate(_ENTITYSPICE_MACHINE,
+      if (_entityspice_token_validate(_ENTITYSPICE_MACHINE,
         @strtolower($value))) {
         return _ENTITYSPICE_ERR_INVALID;
       }
       break;
 
     case _ENTITYSPICE_OVEN_MACHINE_UPPER:
-      if (_entityspice_oven_token_validate(_ENTITYSPICE_MACHINE,
+      if (_entityspice_token_validate(_ENTITYSPICE_MACHINE,
         @strtolower($value))) {
         return _ENTITYSPICE_ERR_INVALID;
       }
@@ -112,7 +112,7 @@ function _entityspice_oven_token_validate($token_name, $value) {
       break;
 
     case _ENTITYSPICE_OVEN_TYPE_CONST:
-      return _entityspice_oven_token_validate(_ENTITYSPICE_MACHINE,
+      return _entityspice_token_validate(_ENTITYSPICE_MACHINE,
         @strtolower($value));
 
     //    case _ENTITYSPICE_OVEN_ADMIN_BUNDLE_URI:
@@ -131,7 +131,7 @@ function _entityspice_oven_token_validate($token_name, $value) {
   return _ENTITYSPICE_ERR_NO_ERR;
 }
 
-function _entityspice_oven_token_post_process($validation_policy, $value) {
+function _entityspice_token_post_process($validation_policy, $value) {
   drush_log("v: $value, val: $validation_policy");
   switch ($validation_policy) {
     case 'boolean':

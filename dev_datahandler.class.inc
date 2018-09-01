@@ -1,12 +1,8 @@
 <?php
 
-/**
- * @file
- *
- * Provides development helpers.
- */
-
-// _______________________________________________________________ DATA HELPERS
+if(!defined(ENTITYSPICE_DEVELOPMENT) || !ENTITYSPICE_DEVELOPMENT) {
+  die;
+}
 
 class EntitySpiceException extends RuntimeException {
 

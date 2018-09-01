@@ -127,10 +127,33 @@ function <?php echo $a['machine_name'] ?>_menu() {
 
   return $items;
 }
-`
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * Changing the BASEPATH/ENTITY/add menu item to type MENU_LOCAL_ACTION would
+ * break display of child items. Instead, dynamically add the local action.
+ *
+ * Adds action link to 'xxxx/yyyy/add' on 'xxxx/yyyyy' page.
+ */
+function <?php echo $a['machine_name'] ?>_menu_local_task_alter(&$data, $router_item, $root_path) {
+  $machine_name = NULL;
+  $parent_admin_path = '';
+  if ($parent_admin_path === $root_path) {
+    $item = menu_get_item($parent_admin_path . '/add');
+    if ($item['access']) {
+      $data['actions']['output'][] = [
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      ];
+    }
+  }
+}
+
+
+
 /**
 * Implements hook_admin_menu_map().
-
  TODO
 */
 function _<?php echo $a['machine_name'] ?>_admin_menu_map() {

@@ -1,14 +1,5 @@
 <?php /** @noinspection PhpUnhandledExceptionInspection */
 
-const _ENTITYSPICE_OVEN_FILES = [
-  'class.inc',
-  'bundle.class.inc',
-  'entity.inc',
-  'forms.inc',
-  'info',
-  'install',
-  'module',
-];
 
 const _ENTITYSPICE_OVEN_MODULE_NAME = 'module_name';
 const _ENTITYSPICE_OVEN_MODULE_DESC = 'module_description';
@@ -26,27 +17,18 @@ const _ENTITYSPICE_OVEN_MACHINE_CAMEL = 'machine_camel';
 const _ENTITYSPICE_OVEN_LABEL = 'label';
 const _ENTITYSPICE_OVEN_TYPE_CONST = 'type_const';
 
-const _ENTITYSPICE_OVEN_CUSTOM_PROPERTIES = [
-  'revision',
-  'bundle',
-  'uid',
-  'created',
-  'updated',
-  'title',
-];
-
 //const _ENTITYSPICE_OVEN_MENU_LABEL = 'menu_label';
 
 //const _ENTITYSPICE_OVEN_CONTENT_DEFAULT_URI = 'content_default_uri';
 //const _ENTITYSPICE_OVEN_ADMIN_BUNDLE_URI = 'admin_bundle_uri';
 //const _ENTITYSPICE_OVEN_DELETE_FORM_REDIRECT_URI = 'delete_form_redirect_uri';
 
-require_once 'entityspice_oven_error.inc';
+require_once 'entityspice_error.inc';
 
 // _____________________________________________________________________________
 
-function _entityspice_oven_token_default_value($machine_name, $name) {
-  $tokens = _entityspice_oven_tokens();
+function _entityspice_token_default_value($machine_name, $name) {
+  $tokens = _entityspice_tokens();
 
   $camel = str_replace(
     '_', '', ucwords($machine_name, '_'));
@@ -110,7 +92,7 @@ function _entityspice_oven_token_default_value($machine_name, $name) {
   }
 }
 
-function _entityspice_oven_tokens() {
+function _entityspice_tokens() {
   $tokens[_ENTITYSPICE_MACHINE] = [
     'prompt' => FALSE,
     'label' => 'machine name',
@@ -207,7 +189,7 @@ function _entityspice_oven_tokens() {
   //    'default_policy' => '_ENTITYSPICE_OVEN_FORM_REDIRECT_URI',
   //  ];
 
-  foreach (_ENTITYSPICE_OVEN_CUSTOM_PROPERTIES as $p) {
+  foreach ([] as $p) {
     $tokens['has_' . $p] = [
       'prompt' => TRUE,
       'label' => 'has ' . $p,
@@ -250,17 +232,17 @@ function _entityspice_oven_tokens() {
 /**
  * Stolen from drush pm-download, to find where to put generated module in.
  *
- * Only used by function _entityspice_oven_pm_download_destination().
+ * Only used by function _entityspice_pm_download_destination().
  *
  * @param $type
  * @param $drupal_root
  * @param $sitepath
  * @param bool $create
  *
- * @see \_entityspice_oven_pm_download_destination()
+ * @see \_entityspice_pm_download_destination()
  * @return bool|string
  */
-function _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $sitepath, $create = FALSE) {
+function _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitepath, $create = FALSE) {
   $destination = $type . 's';
   // Prefer /contrib if it exists.
   if ($sitepath) {
@@ -289,7 +271,7 @@ function _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $
  *
  * @return array|bool|mixed|null|string|string[]
  */
-function _entityspice_oven_pm_download_destination($type) {
+function _entityspice_pm_download_destination($type) {
   $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
   $site_root = drush_get_context('DRUSH_DRUPAL_SITE_ROOT');
   $full_site_root = (empty($drupal_root) || empty($site_root)) ? '' : $drupal_root . '/' . $site_root;
@@ -306,27 +288,27 @@ function _entityspice_oven_pm_download_destination($type) {
   // directory already exists, then we use that.
   if (empty($destination) && $site_root && $in_site_directory) {
     $create_dir = drush_get_option('use-site-dir', FALSE);
-    $destination = _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $full_site_root, $create_dir);
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $full_site_root, $create_dir);
   }
   // Attempt 2: If the destination directory already exists for
   // the sitewide directory, use that.
   if (empty($destination) && $drupal_root) {
-    $destination = _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $sitewide);
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitewide);
   }
   // Attempt 3: If a specific (non default) site directory exists and
   // the sitewide directory does not exist, then create destination
   // in the site specific directory.
   if (empty($destination) && $site_root && $site_root !== 'sites/default' && is_dir($full_site_root) && !is_dir($sitewide)) {
-    $destination = _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $full_site_root, TRUE);
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $full_site_root, TRUE);
   }
   // Attempt 4: If sitewide directory exists, then create destination there.
   if (empty($destination) && is_dir($sitewide)) {
-    $destination = _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $sitewide, TRUE);
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitewide, TRUE);
   }
   // Attempt 5: If site directory exists (even default), then create
   // destination in that directory.
   if (empty($destination) && $site_root && is_dir($full_site_root)) {
-    $destination = _entityspice_oven_pm_download_destination_lookup($type, $drupal_root, $full_site_root, TRUE);
+    $destination = _entityspice_pm_download_destination_lookup($type, $drupal_root, $full_site_root, TRUE);
   }
   // Attempt 6: If we didn't find a valid directory yet (or we somehow found
   // one that doesn't exist) we always fall back to the current directory.
@@ -339,10 +321,10 @@ function _entityspice_oven_pm_download_destination($type) {
 
 // _____________________________________________________________________________
 
-function _entityspice_oven_fill_default_values($machine_name, array $tokens) {
-  foreach (_entityspice_oven_tokens() as $name => $token) {
+function _entityspice_fill_default_values($machine_name, array $tokens) {
+  foreach (_entityspice_tokens() as $name => $token) {
     if (!isset($tokens[$name])) {
-      $tokens[$name] = _entityspice_oven_token_default_value($machine_name, $name);
+      $tokens[$name] = _entityspice_token_default_value($machine_name, $name);
     }
   };
   $tokens['machine_name'] = $machine_name;
@@ -367,10 +349,25 @@ function _entityspice_oven_fill_default_values($machine_name, array $tokens) {
  * @return array keyed by the file name, and the (rendered) file content as
  *   string.
  */
-function _entityspice_oven_render(array $tokens) {
+function _entityspice_render(array $tokens) {
+  $ENTITYSPICE_OVEN_FILES = [
+    'access.inc',
+    'admin.inc',
+    'bundle.class.inc',
+    'class.inc',
+    'dev.inc',
+    'display.inc',
+    'entity.inc',
+    'info',
+    'inline_entity_form.inc',
+    'install',
+    'menu.inc',
+    'module',
+  ];
+
   $files = [];
   $tokens['php'] = '<' . '?php';
-  foreach (_ENTITYSPICE_OVEN_FILES as $f) {
+  foreach ($ENTITYSPICE_OVEN_FILES as $f) {
     if ($f === 'bundle.class.inc' && !$tokens['has_bundle']) {
       continue;
     }
@@ -383,20 +380,20 @@ function _entityspice_oven_render(array $tokens) {
   return $files;
 }
 
-function _entityspice_oven_ekran($target_dir, array $tokens) {
+function _entityspice_ekran($target_dir, array $tokens) {
   if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
-    _entityspice_oven_ekran_drush($target_dir, $tokens);
+    _entityspice_ekran_drush($target_dir, $tokens);
   }
   else {
-    _entityspice_oven_ekran_drupal($target_dir, $tokens);
+    _entityspice_ekran_drupal($target_dir, $tokens);
   }
 }
 
-function _entityspice_oven_ekran_drush($target_dir, $tokens) {
+function _entityspice_ekran_drush($target_dir, $tokens) {
   if (!drush_op('chdir', $target_dir)) {
     return 'could not chdir into target: ' . $target_dir;
   }
-  foreach (_entityspice_oven_render($tokens) as $file => $text) {
+  foreach (_entityspice_render($tokens) as $file => $text) {
     $f = drush_op('fopen', 'w', $file);
     if (!$f) {
       drush_log('warning', 'could not open file for writing, dry_run? -> ' . $file);
@@ -408,11 +405,11 @@ function _entityspice_oven_ekran_drush($target_dir, $tokens) {
   return '';
 }
 
-function _entityspice_oven_ekran_drupal($target_dir, $tokens) {
+function _entityspice_ekran_drupal($target_dir, $tokens) {
   if (!chdir($target_dir)) {
     return 'could not chdir into target: ' . $target_dir;
   }
-  foreach (_entityspice_oven_render($tokens) as $file => $text) {
+  foreach (_entityspice_render($tokens) as $file => $text) {
     $f = fopen($file, 'w');
     if (!$f) {
       return "could not create file: $file";

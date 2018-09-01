@@ -1,180 +1,15 @@
 <?php
 
-// TODO create delegate.
-
-// TODO specify names that may collide (tables, classes).
-
-/*
- * TODO some comment from old es?
- *
-// This variable needed in hook_menu so that ES will know what will be the
-// position of arg in each path. It is determined by how many words between
-// slashes (es/type/% : 2) appear before the arg.
-$d['parent user path arg no'] =
-count(explode('/', $d['parent userland path']));
- * @return array
- */
-
-
 /**
- * Configuration keys of an entity supported by entity spice.
+ * This implementation does NOT call any of subclass methods. Do NOT expect
+ * behaviour of a method to change, overriding some other method.
  *
  * None of methods declared in this class or implementation should take a key,
  * and nothing other than simple values indication support for a future should
- * be returned. An implementation must be a simple immutable value class with
- * no logic. Else, it is a design error, a disaster.
+ * be returned. It must be a simple immutable value class with no logic. Else,
+ * it is a design error, a disaster.
  */
-interface EntitySpiceEntityConfig {
-
-  function machineName();
-
-  function safe();
-
-
-  function machineNameConst();
-
-  function module();
-
-  function humanName();
-
-  function camelNameLcFirst();
-
-  function camelNameUcFirst();
-
-
-  function idKey();
-
-  function titleKey();
-
-  function uidKey();
-
-  function develSupport();
-
-  // ___________________________________________________________________ BUNDLE
-
-  function hasBundle();
-
-  function bundleLockOnExists();
-
-  function bundleIdKey();
-
-  function bundleKeyName();
-
-  function bundleMachineName();
-
-  function bundleEntityClass();
-
-  /**
-   * TODO
-   */
-  function bundleIsEntity();
-
-  function isBundleFieldable();
-
-  function bundleTable();
-
-  function bundleAccessCallback();
-
-  function bundleFormSubmitDelete();
-
-  function bundleSubmitDelete();
-
-  function bundleExistsCallback();
-
-  function bundleUIControllerClass();
-
-  function bundleClass();
-
-  function bundleControllerClass();
-
-  function bundleSubmitRedirect();
-
-  function bundleDeleteRedirect();
-
-
-  // _________________________________________________________________ REVISION
-
-  function ridKey();
-
-  function hasRevision();
-
-  function revisionTable();
-
-  function hasRevisionLog();
-
-  function revisionKeyName();
-
-  // _____________________________________________________________________ USER
-
-  function hasUid();
-
-  // ___________________________________________________________________ ENTITY
-
-  function baseTable();
-
-  function titleLabel();
-
-  function hasTitle();
-
-  function hasUpdated();
-
-  function hasCreated();
-
-  function isFieldable();
-
-  function accessCallback();
-
-  function controllerClass();
-
-  function metadataControllerClass();
-
-  function viewsControllerClass();
-
-  function entityClass();
-
-  function exceptionClass();
-
-  function uriBase();
-
-  function uriCallback();
-
-  function hasCanDeleteHook();
-
-  // ______________________________________________________________ ENTITY FORM
-
-  function addForm();
-
-  function editForm();
-
-  function deleteForm();
-
-
-  function parentAdminPath();
-
-  function parentUserlandPath();
-
-  function entityDeleteRedirect();
-
-  function accessControlledActions();
-
-
-  // __________________________________________________________________________
-
-  function hasInlineEntityFormSupport();
-
-  function inlineInlineEntityForm();
-
-  function inlineInlineEntityFormClass();
-
-}
-
-/**
- * Default implementation of \EntitySpiceEntityConfiguration with sane values.
- *
- * This implementation does NOT call any of subclass methods. Do NOT expect
- * behaviour of a method to change, overriding some other method.
- */
-class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
+class DefaultEntitySpiceEntityConfig {
 
   private $machine_name;
 
@@ -441,7 +276,7 @@ class DefaultEntitySpiceEntityConfig implements EntitySpiceEntityConfig {
   }
 
   function uriCallback() {
-    throw new EntitySpiceOperationNotSupported("uriCallback");
+    throw new RuntimeException("uriCallback");
   }
 
   function hasCanDeleteHook() {

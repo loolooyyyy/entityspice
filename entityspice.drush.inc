@@ -1,6 +1,6 @@
 <?php
 
-require_once 'entityspice_oven.module';
+require_once 'entityspice.module';
 
 /**
  * Asks user for yes or no and parse input.
@@ -12,7 +12,7 @@ require_once 'entityspice_oven.module';
  *
  * @return bool true if user said yes false otherwise.
  */
-function _entityspice_oven_drush_presume($check_context, $msg) {
+function _entityspice_drush_presume($check_context, $msg) {
   drush_print_prompt($msg . " (Y/n): ", 0);
   if ($check_context && drush_get_context('DRUSH_AFFIRMATIVE')) {
     // Automatically accept confirmations if the --yes argument was supplied.
@@ -45,11 +45,11 @@ function _entityspice_oven_drush_presume($check_context, $msg) {
 /**
  * Implements hook_drush_command().
  */
-function entityspice_oven_drush_command() {
+function entityspice_drush_command() {
   /** @noinspection PhpUndefinedConstantInspection */
-  $items['entityspice-oven-cook'] = [
+  $items['entityspice-cook'] = [
     'aliases' => ['cook'],
-    'callback' => '_entityspice_oven_drush_ekran',
+    'callback' => '_entityspice_drush_ekran',
     'description' => 'Create a module containing an entity (cook an entity type).',
     'arguments' => [_ENTITYSPICE_MACHINE => 'Machine name of generated entity.'],
     'options' => [],
@@ -64,9 +64,9 @@ function entityspice_oven_drush_command() {
     'examples' => [],
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
   ];
-  foreach (_entityspice_oven_tokens() as $name => $token) {
+  foreach (_entityspice_tokens() as $name => $token) {
     if ($name !== _ENTITYSPICE_MACHINE) {
-      $items['entityspice-oven-cook']['options'][$name] = $token['description'];
+      $items['entityspice-cook']['options'][$name] = $token['description'];
     }
   }
   return $items;
@@ -77,7 +77,7 @@ function entityspice_oven_drush_command() {
  *
  * @param $section
  */
-function entityspice_oven_drush_help($section) {
+function entityspice_drush_help($section) {
   // @TODO
 }
 
@@ -89,10 +89,10 @@ function entityspice_oven_drush_help($section) {
  * @return bool true on success, false otherwise.
  * @throws \Exception
  */
-function _entityspice_oven_drush_ekran($machine_name = NULL) {
+function _entityspice_drush_ekran($machine_name = NULL) {
   // ======================================================= Handle machine name
-  if ($err = _entityspice_oven_token_validate(_ENTITYSPICE_MACHINE, $machine_name)) {
-    drush_set_error('bad machine name: ' . _entityspice_oven_error_msg($err));
+  if ($err = _entityspice_token_validate(_ENTITYSPICE_MACHINE, $machine_name)) {
+    drush_set_error('bad machine name: ' . _entityspice_error_msg($err));
     return FALSE;
   }
   if (module_exists($machine_name)) {
@@ -102,7 +102,7 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
   $tokens[_ENTITYSPICE_MACHINE] = $machine_name;
 
   // ================================================== Handle drush cli options
-  foreach (_entityspice_oven_tokens() as $name => $token) {
+  foreach (_entityspice_tokens() as $name => $token) {
     // Machine name is already set by a mandatory argument.
     if ($name === _ENTITYSPICE_MACHINE) {
       continue;
@@ -111,9 +111,9 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
     if ($arg === NULL) {
       continue;
     }
-    $arg = _entityspice_oven_token_post_process($token['validation_policy'], $arg);
-    if ($err = _entityspice_oven_token_validate($name, $arg)) {
-      drush_set_error('bad value: ' . $arg . ', ' . _entityspice_oven_error_msg($err));
+    $arg = _entityspice_token_post_process($token['validation_policy'], $arg);
+    if ($err = _entityspice_token_validate($name, $arg)) {
+      drush_set_error('bad value: ' . $arg . ', ' . _entityspice_error_msg($err));
       return FALSE;
     }
     else {
@@ -122,28 +122,28 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
   }
 
   // ======================================================= Handle drush prompt
-  if (_entityspice_oven_drush_presume(TRUE, 'do you want to use default options?')) {
-    $tokens = _entityspice_oven_fill_default_values($machine_name, $tokens);
+  if (_entityspice_drush_presume(TRUE, 'do you want to use default options?')) {
+    $tokens = _entityspice_fill_default_values($machine_name, $tokens);
   }
   else {
     // Uses 'prompt', 'label', 'description' in tokens array.
     drush_log('Enter "?" to see each arguments help, ' .
       'leave empty for default value.' . "\n", 'ok');
-    foreach (_entityspice_oven_tokens() as $name => $token) {
+    foreach (_entityspice_tokens() as $name => $token) {
       if (isset($tokens[$name]) || !$token['prompt']) {
         continue;
       }
       while (TRUE) {
         $value = drush_prompt($token['label'] . ' (? for help)',
-          _entityspice_oven_token_default_value($machine_name, $name),
+          _entityspice_token_default_value($machine_name, $name),
           TRUE);
         if ($value === '?') {
           drush_log($token['description'] . "\n", 'ok');
           continue;
         }
-        $value = _entityspice_oven_token_post_process($token['validation_policy'], $value);
-        if ($err = _entityspice_oven_token_validate($name, $value)) {
-          drush_log(_entityspice_oven_error_msg($err), 'error');
+        $value = _entityspice_token_post_process($token['validation_policy'], $value);
+        if ($err = _entityspice_token_validate($name, $value)) {
+          drush_log(_entityspice_error_msg($err), 'error');
         }
         else {
           $tokens[$name] = $value;
@@ -154,7 +154,7 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
   }
 
   // ======================================================= Find dest directory
-  $dest = _entityspice_oven_pm_download_destination('module') . '/' . $machine_name;
+  $dest = _entityspice_pm_download_destination('module') . '/' . $machine_name;
   if (is_dir($dest)) {
     drush_set_error("destination already exists: $dest, installing into an existing" .
       ' destination is dangerous and not supported');
@@ -167,7 +167,7 @@ function _entityspice_oven_drush_ekran($machine_name = NULL) {
     drush_log('could not mkdir tmp directory: ' . $tmp);
     return FALSE;
   }
-  if ($err = _entityspice_oven_ekran($tmp, $tokens)) {
+  if ($err = _entityspice_ekran($tmp, $tokens)) {
     drush_log("failed: $err", 'error');
     return FALSE;
   }

@@ -39,3 +39,14 @@ how does the behaviour change if user decides to give permission?
 where to checkplain always regardless of role, user and permissoin, just to be safe?
 
 plugable access mechanism
+
+
+remove these psudo fields from PLACEHOLDERS if entity does not actually have 'em:
+  title field
+  bundle name
+
+  default views
+
+  all places _es_get_entity
+
+  on submit redirect?
