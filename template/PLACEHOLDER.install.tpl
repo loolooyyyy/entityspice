@@ -1,9 +1,9 @@
-<?php print $a['php'] ?>
+<?php print $a->php(); ?>
 
 /**
  * Implements hook_schema().
  */
-function <?php echo $a['machine_name'] ?>_schema() {
+function <?php echo $a->machineName(); ?>_schema() {
   $fields = [];
 
   $revision_table = NULL; // $info->revisionTable();
@@ -114,15 +114,15 @@ function <?php echo $a['machine_name'] ?>_schema() {
  *
  * Create default bundle and default configuration.
  */
-function <?php echo $a['machine_name'] ?>_install() {
- //if(!drupal_get_schema('<?php echo $a['machine_name'] ?>_bundle')) {
+function <?php echo $a->machineName(); ?>_install() {
+ //if(!drupal_get_schema('<?php echo $a->machineName(); ?>_bundle')) {
  //  return;
  //}
  //else {
- //  $bundle = entity_create('<?php echo $a['machine_name'] ?>_bundle', []);
+ //  $bundle = entity_create('<?php echo $a->machineName(); ?>_bundle', []);
  //  $bundle->locked = TRUE;
- //  $bundle->label = '<?php echo $a['label'] ?>';
- //  $bundle->name = '<?php echo $a['machine_name'] ?>';
+ //  $bundle->label = '<?php echo $a->machineName() ?>';
+ //  $bundle->name = '<?php echo $a->machineName(); ?>';
  //  $bundle->save();
  //}
 }

@@ -1,13 +1,13 @@
-<?php print $a['php'] ?>
+<?php print $a->php(); ?>
 
 /**
 * Implements hook_menu().
 */
-function <?php echo $a['machine_name'] ?>_menu() {
-  $machine_name = '<?php echo $a['machine_name'] ?>';
-  $s_name = '<?php echo $a['safe'] . $a['machine_name'] ?>';
-  $human_name = '<?php echo $a['human name'] ?>';
-  $root = '<?php echo $a['parent userland path'] ?>';
+function <?php echo $a->machineName(); ?>_menu() {
+  $machine_name = '<?php echo $a->machineName(); ?>';
+  $s_name = '<?php echo $a->sMachineName(); ?>';
+  $human_name = '<?php echo $a->humanName(); ?>';
+  $root = '<?php echo $a->parentUserlandPath(); ?>';
   $einfo = entity_get_info($machine_name);
 
   if(strlen($root) < 1) {
@@ -26,7 +26,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
   $items[$root . '/add'] = [
     'title' => 'Add a ' . $human_name,
     'description' => 'Add a new ' . $human_name,
-<?php if($a['has bundle']): ?>
+<?php if($a->hasBundle()): ?>
     'page callback' => $s_name . '_bundles_list_page',
 <?php else: ?>
     'page callback' => $s_name . '_add_page',
@@ -35,7 +35,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
     'access arguments' => ["add $machine_name"],
   ];
 
-  <?php if($a['has bundle']): ?>
+  <?php if($a->hasBundle()): ?>
   foreach ($einfo['bundles'] as $bun_name => $bundle) {
     $items[$root . '/add/' . $bun_name] = [
       'title' => $bundle['label'],
@@ -57,7 +57,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
     throw new RuntimeException('path must NOT begin with or end in slash.');
   }
   $root_parts = count(explode('/', $root));
-  $arg_no = $root_parts + 1
+  $arg_no = $root_parts + 1;
 
   $access_cbk = $s_name . '_entity_access';
 
@@ -80,7 +80,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
     'title callback' => $s_name . '_menu_title',
     'title arguments' => ['edit', $arg_no],
     'page callback' => 'drupal_get_form',
-    'page arguments' => ['<?php echo $a['edit form'] ?>', $arg_no],
+    'page arguments' => ['<?php echo $a->sMachineName() ?>', $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
     'access callback' => $access_cbk,
@@ -90,19 +90,19 @@ function <?php echo $a['machine_name'] ?>_menu() {
     'title callback' => $s_name . '_menu_title',
     'title arguments' => ['delete', $arg_no],
     'page callback' => 'drupal_get_form',
-    'page arguments' => ['<?php echo $a['delete form'] ?>', $arg_no],
+    'page arguments' => ['<?php echo $a->sMachineName(); ?>', $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
     'access callback' => $access_cbk,
     'access arguments' => ['delete', $arg_no],
   ];
 
-  <?php if($a['devel support']): ?>
+  <?php if($a->hasDevelSupport()): ?>
   if (module_exists('devel')) {
     $items[$root . '/%/devel'] = [
       'title' => 'Devel',
       'page callback' => $s_name . '_devel_load_object',
-      'file' => '<?php echo $a['machine_name']; ?>.dev.inc',
+      'file' => '<?php echo $a->machineName(); ?>.dev.inc',
       'page arguments' => [$arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
@@ -116,7 +116,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
     $items[$root . '/%/devel/render'] = [
       'title' => 'Render',
       'page callback' => $s_name . '_devel_render_object',
-      'file' => '<?php echo $a['machine_name']; ?>.dev.inc',
+      'file' => '<?php echo $a->machineName(); ?>.dev.inc',
       'page arguments' => [$arg_no],
       'type' => MENU_LOCAL_TASK,
       'weight' => 100,
@@ -136,7 +136,7 @@ function <?php echo $a['machine_name'] ?>_menu() {
  *
  * Adds action link to 'xxxx/yyyy/add' on 'xxxx/yyyyy' page.
  */
-function <?php echo $a['machine_name'] ?>_menu_local_task_alter(&$data, $router_item, $root_path) {
+function <?php echo $a->machineName() ?>_menu_local_task_alter(&$data, $router_item, $root_path) {
   $machine_name = NULL;
   $parent_admin_path = '';
   if ($parent_admin_path === $root_path) {
@@ -156,14 +156,15 @@ function <?php echo $a['machine_name'] ?>_menu_local_task_alter(&$data, $router_
 * Implements hook_admin_menu_map().
  TODO
 */
-function _<?php echo $a['machine_name'] ?>_admin_menu_map() {
+function _<?php echo $a->machineName() ?>_admin_menu_map() {
+  $machine_name = '<?php echo $a->machineName() ?>';
   $i = _entityspice_get_info($machine_name)['_entityspice_entity_info_alter'];
   $path = $i['path'];
   $name = '%' . $i['name'];
 
   $map[$path]['parent'] = $i['parent'];
   $map[$path]['arguments'][][$name] =
-    <?php echo $a['safe'] . $a['machine_name'] ?>_get_bundles_names();
+    <?php echo $a->sMachineName(); ?>_get_bundles_names();
 
   return $map;
 }
@@ -180,8 +181,8 @@ function _<?php echo $a['machine_name'] ?>_admin_menu_map() {
  *
  * @return string themed output of bundles list.
  */
-function <?php echo $a['safe'] . $a['machine_name'] ?>_bundles_list_page() {
-  $s_name = '<?php echo $a['safe'] . $a['machine_name'] ?>';
+function <?php echo $a->sMachineName(); ?>_bundles_list_page() {
+  $s_name = '<?php echo $a->sMachineName(); ?>';
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
 
@@ -200,7 +201,7 @@ function <?php echo $a['safe'] . $a['machine_name'] ?>_bundles_list_page() {
 /**
  * Page callback for entity overview page.
  */
-function  <?php echo $a['safe'] . $a['machine_name'] ?>_entity_page() {
+function  <?php echo $a->sMachineName(); ?>_entity_page() {
   // TODO a copy of admin/node, but there are too much custom properties and
   // optional ones too, so use views anyway.
   throw new RuntimeException('unsupported');
@@ -209,14 +210,14 @@ function  <?php echo $a['safe'] . $a['machine_name'] ?>_entity_page() {
 /**
 * Page callback for adding an entity.
 */
-function <?php echo $a['safe'] . $a['machine_name']; ?>_add_page(<?php if($a['has bundle']): ?>$bundle<?php endif ?>) {
-  $s_name = '<?php echo $a['safe'] . $a['machine_name'] ?>';
-  $module = '<?php echo $a['module'] ?>';
+function <?php echo $a->sMachineName(); ?>_add_page(<?php if($a->hasBundle()): ?>$bundle<?php endif; ?>) {
+  $s_name = '<?php echo $a->sMachineName(); ?>';
+  $module = '<?php echo $a->machineName(); ?>';
 
   $form_callback = ;
 
   module_load_include($module, 'forms.inc');
 
-  $entity = <?php echo $a['safe'] . $a['machine_name']; ?>_entity_create(<?php if($a['has bundle']): ?>['bundle' => $bundle]<?php endif; ?>);
+  $entity = <?php echo $a->sMachineName(); ?>_entity_create(<?php if($a->hasBundle()): ?>['bundle' => $bundle]<?php endif; ?>);
   return drupal_get_form("<?php echo $info['add form']; ?>", $entity);
 }

@@ -1,4 +1,4 @@
-<?php print $a['php']; ?>
+<?php print $a->php; ?>
 
 /**
  * Check to see if $account is the owner of $entity.
@@ -19,7 +19,6 @@ function <?php echo $a->sMachineName(); ?>_entity_access_is_self($entity, $accou
  *
 <?php if($a->hasBundle()): ?>
 * If the entity is null, check if user has $op access on entity type or bundle.
-<?php endif; ?>
 <?php else: ?>
 * If the entity is null, check if user has $op access on entity type.
 <?php endif; ?>
@@ -50,7 +49,7 @@ function <?php echo $a->sMachineName(); ?>_entity_access($op,<?php if($a->hasBun
     return TRUE;
   }
 
-<?php if($a['has_bundle']): ?>
+<?php if($a->hasBundle()): ?>
   if ($bundle !== NULL && user_access("$machine_name - $bundle - $op", $account)) {
     return TRUE;
   }

@@ -1,8 +1,8 @@
-<?php print $a['php']; ?>
+<?php print $a->php(); ?>
 
 /**
  * @file
- * <?php print $a['machine_name']; ?>'s bundle classes.
+ * <?php print $a->machineName(); ?>'s bundle classes.
  *
 // TODO custom fields.
 // TODO deny delete.
@@ -47,13 +47,13 @@ class <?php print $a->camelNameUcFirst(); ?>Controller extends EntityAPIControll
    * @see parent
    */
   final public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    <?php if($a->hasLock());>
+    <?php if($a->bundleHasLock()): ?>
     foreach($ids as $id) {
       if(<?php echo $a->sMachineName(); ?>_bundle_has_entity($id)) {
         throw new RuntimeException('entities of this type exist, thus it is locked: [ ' . $id . ']');
       }
     }
-    <?php endif;>
+    <?php endif; ?>
     parent::delete($ids, $transaction);
     menu_rebuild();
   }
@@ -102,7 +102,7 @@ function <?php echo $a->sMachineName() ?>_bundle_load($name) {
     return $bundle;
   }
 
-  throw new <?php echo $a->exceptionClass(); >('no such bundle: ' . $name);
+  throw new <?php echo $a->camelNameUcFirst(); ?>Exception('no such bundle: ' . $name);
 }
 
 /**
@@ -156,7 +156,10 @@ function <?php echo $a->sMachineName(); ?>_get_bundles_options_list($check_plain
 /**
 * Check if entities of this bundle exist.
 */
-function <?php echo $a->sMachineName(); ?>_bundle_has_entity($bundle_machine_name) {
+function <?php echo $a->sMachineName(); ?>_bundle_has_entity($name) {
   $bundle_machine_name = '<?php echo $a->bundleMachineName(); ?>';
-  throw new RuntimeException('must check if any entity of this bundle exists, but it is not implemented yet!');
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', '<?php echo $a->machineName(); ?>');
+  $query->entityCondition('bundle', $name); // IS THIS RIGHT?
+  return $query->count()->execute() > 0;
 }

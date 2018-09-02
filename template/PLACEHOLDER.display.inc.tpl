@@ -1,4 +1,4 @@
-<?php print $a['php']; ?>
+<?php print $a->php(); ?>
 
 /**
  * Implements hook_theme().
@@ -7,11 +7,11 @@
  *   - Defines theme callback for default page.
  *   - Defines theme callback for property field of entity (pseudo fields).
  */
-function <?php print $a['machine name'] ?>_theme() {
+function <?php print $a->machineName(); ?>_theme() {
   $info = [
-    '<?php print $a['machine_camel'] ?>_entity_add_list' => ['content', 'entity_type'],
-    '<?php print $a['machine_camel'] ?>_entity_list' => ['header', 'rows', 'entity_type', 'entities'],
-    '<?php print $a['machine_camel'] ?>_default_page' => ['entity_types'],
+    '<?php print $a->machineName(); ?>_entity_add_list' => ['content', 'entity_type'],
+    '<?php print $a->machineName(); ?>_entity_list' => ['header', 'rows', 'entity_type', 'entities'],
+    '<?php print $a->machineName(); ?>_default_page' => ['entity_types'],
   ];
 
   $theme = [];
@@ -21,7 +21,7 @@ function <?php print $a['machine name'] ?>_theme() {
     }
   }
 
-  $theme['<?php print $a['machine_camel'] ?>_entity_property_field'] = [
+  $theme['<?php print $a->machineName(); ?>_entity_property_field'] = [
     'variables' => [
       'label_hidden' => FALSE,
       'title_attributes' => NULL,
@@ -47,11 +47,10 @@ function <?php print $a['machine name'] ?>_theme() {
  * @ingroup themeable
  * @return string
  */
-function theme_<?php echo $a['machine_name'] ?>_entity_add_list($variables) {
+function theme_<?php echo $a->machineName(); ?>_entity_add_list($variables) {
   $content = $variables['content'];
   $etype = $variables['entity_type'];
-  $info = _entityspice_get_info($etype);
-  $bundles_page = $info['parent admin path'];
+  $bundles_page = '<?php print $a->parentAdminPath(); ?>';
 
   if ($content) {
     $output = '<dl class="node-type-list">';
@@ -77,7 +76,7 @@ function theme_<?php echo $a['machine_name'] ?>_entity_add_list($variables) {
 /**
  * Theme function for entity list.
  */
-function theme_<?php echo $a['machine_name'] ?>_entity_list($variables) {
+function theme_<?php echo $a->machineName(); ?>_entity_list($variables) {
   $header = $variables['header'];
   $rows = $variables['rows'];
   $etype = $variables['entity_type'];
@@ -103,7 +102,7 @@ function theme_<?php echo $a['machine_name'] ?>_entity_list($variables) {
  * @ingroup themeable
  * @return string
  */
-function theme_<?php echo $a['machine_name'] ?>_default_page($variables) {
+function theme_<?php echo $a->machineName(); ?>_default_page($variables) {
   $content = $variables['content'];
 
   if ($content) {
@@ -129,6 +128,6 @@ function theme_<?php echo $a['machine_name'] ?>_default_page($variables) {
  * Simple wrapper around theme_field that sets default values and ensures
  * properties render consistently with fields.
  */
-function theme_<?php echo $a['machine_name'] ?>_entity_property_field($variables) {
+function theme_<?php echo $a->machineName(); ?>_entity_property_field($variables) {
   return theme('field', $variables);
 }

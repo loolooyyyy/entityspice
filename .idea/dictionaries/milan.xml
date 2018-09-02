@@ -13,10 +13,15 @@
       <w>ekran</w>
       <w>entityspice</w>
       <w>etype</w>
+      <w>fclose</w>
       <w>fieldable</w>
+      <w>fopen</w>
+      <w>fwrite</w>
       <w>langcode</w>
       <w>nbsp</w>
       <w>sinfo</w>
+      <w>sitepath</w>
+      <w>sitewide</w>
       <w>stdin</w>
       <w>strlen</w>
       <w>stype</w>

@@ -1,18 +1,18 @@
-<?php print $a['php'] ?>
+<?php print $a->php(); ?>
 
 /**
  * @file
- * <?php print $a['machine_name']; ?> entity classes.
+ * <?php print $a->machineName(); ?> entity classes.
  */
 
 /**
  * The mighty entity class, for the entity itself.
  */
-class <?php echo $a['machine_camel'] ?> extends Entity {
-  const _entity_type = <?php print $a['type_const'] ?>;
+class <?php echo $a->camelNameUcFirst(); ?> extends Entity {
+  const _entity_type = <?php print $a->machineName(); ?>;
 
-<?php if($a['has_bundle']): ?>
-  public $<?php print $a['bundle_name'] ?> = NULL;
+<?php if($a->hasBundle()): ?>
+  public $<?php print $a->bundleKeyName(); ?> = NULL;
 <?php endif; ?>
 
   // TODO custom prop
@@ -22,7 +22,7 @@ class <?php echo $a['machine_camel'] ?> extends Entity {
   }
 
   final protected function defaultUri() {
-    $base = "<?php echo $a['uri base']; ?>";
+    $base = "<?php echo $a->parentUserlandPath(); ?>";
     return ['path' => $base . '/' . $this->identifier()];
   }
 
@@ -34,14 +34,14 @@ class <?php echo $a['machine_camel'] ?> extends Entity {
  * The controller class for entities contains methods for the entity CRUD
  * operations.
  */
-class <?php echo $a['machine_camel'] ?>EntityController extends EntityDefaultMetadataController {
-  const _entity_type = '<?php print $a['type_const'] ?>';
+class <?php echo $a->camelNameUcFirst(); ?>EntityController extends EntityDefaultMetadataController {
+  const _entity_type = '<?php print $a->machineName(); ?>';
 
   public function __construct() {
     parent::__construct($this::_entity_type);
   }
 
-<?php if($a['has can delete hook']): ?>
+<?php if($a->hasCanDeleteHook()): ?>
   /**
    * Deletes multiple entities by ID.
    *
@@ -76,8 +76,8 @@ class <?php echo $a['machine_camel'] ?>EntityController extends EntityDefaultMet
 /**
  * Entity Views Controller class.
  */
-class <?php echo $a['machine_camel'] ?>ViewsController extends EntityDefaultViewsController {
-  const _entity_type = '<?php print $a['type_const'] ?>';
+class <?php echo $a->camelNameUcFirst(); ?>ViewsController extends EntityDefaultViewsController {
+  const _entity_type = '<?php print $a->machineName(); ?>';
 
   public function __construct() {
     parent::__construct($this::_entity_type);
@@ -100,8 +100,8 @@ class <?php echo $a['machine_camel'] ?>ViewsController extends EntityDefaultView
 /**
  * Controls metadata for entities.
  */
-class <?php echo $a['machine_camel'] ?>MetadataController extends EntitySpiceMetadataController {
-  const _entity_type = '<?php print $a['type_const'] ?>';
+class <?php echo $a->camelNameUcFirst() ?>MetadataController extends EntityDefaultMetadataController {
+  const _entity_type = '<?php print $a->machineName() ?>';
 
   public function __construct() {
     parent::__construct($this::_entity_type);

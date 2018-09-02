@@ -161,16 +161,14 @@ abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityF
 /**
  * Implements hook_entity_info().
  *
- * @param string $etype entity type
+ * @param string $machine_name entity type
  *
  * @return mixed
  */
-function _entityspice_entity_info($etype) {
-  // entity_label() will suffice, thus the key not added.
+function _entityspice_entity_info($machine_name) {
+  $info = _entityspice_get_info($machine_name);
 
-  $info = _entityspice_get_info($etype);
-
-  $ret_info[$etype] = [
+  $ret_info[$machine_name] = [
     'module' => $info->module(),
     'label' => $info->humanName(),
     'controller class' => $info->controllerClass(),
@@ -197,7 +195,7 @@ function _entityspice_entity_info($etype) {
     'metadata controller class' => $info->metadataControllerClass(),
     'entity class' => $info->entityClass(),
     'views controller class' => $info->viewsControllerClass(),
-    'token type' => $etype,
+    'token type' => $machine_name,
     'access callback' => $info->accessCallback(),
   ];
   $ret_info[$info->bundleMachineName()] = [
@@ -206,7 +204,7 @@ function _entityspice_entity_info($etype) {
     'controller class' => $info->bundleControllerClass(),
     'base table' => $info->bundleTable(),
     'fieldable' => $info->isBundleFieldable(),
-    'bundle of' => $etype,
+    'bundle of' => $machine_name,
     'exportable' => TRUE,
     'token type' => $info->bundleMachineName(),
     'entity keys' => [
@@ -219,23 +217,15 @@ function _entityspice_entity_info($etype) {
     'admin ui' => [
       'path' => $info->parentAdminPath(),
       'controller class' => $info->bundleUIControllerClass(),
-      'file' => $info->bundleAdminFile(),
-      //         'file path' => $file_path,
     ],
   ];
 
-  if (!$info->hasBundleAdminFile()) {
-    unset($ret_info[$info->bundleMachineName()]['admin ui']['file']);
-  }
   if (!$info->hasBundle()) {
     unset($ret_info[$info->bundleMachineName()]);
   }
   if (!$info->hasRevision()) {
-    unset($ret_info[$etype]['revision table']);
-    unset($ret_info[$etype]['entity keys']['revision']);
-  }
-  if (!$info->hasTitle()) {
-    unset($ret_info[$etype]['entity keys']['label']);
+    unset($ret_info[$machine_name]['revision table']);
+    unset($ret_info[$machine_name]['entity keys']['revision']);
   }
 
   return $ret_info;
