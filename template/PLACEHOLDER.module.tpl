@@ -1,23 +1,23 @@
-<?php print $a->php(); ?>
+<?php print $a->php->value; ?>
 
-require_once dirname(__FILE__) . '/<?php echo $a->machineName(); ?>.entity.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->machineName(); ?>.menu.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->machineName(); ?>.class.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->machineName(); ?>.bundle.class.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->machineName(); ?>.forms.inc';
+require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.entity.inc';
+require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.menu.inc';
+require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.class.inc';
+require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.bundle.class.inc';
+require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.forms.inc';
 
-class <?php echo $a->camelNameUcFirst(); ?>Exception extends RuntimeException {
+class <?php echo $a->uc; ?>Exception extends RuntimeException {
 }
 
 /**
  * Implements hook_permission().
  */
-function <?php echo $a->machineName(); ?>_permission() {
-<?php if($a->hasBundle()): ?>
+function <?php echo $a->m; ?>_permission() {
+<?php if($a->has_bundle->value): ?>
 <?php else: ?>
 <?php endif; ?>
-  $machine_name = '<?php echo $a->machineName(); ?>';
-  $actions = '<?php implode(', ', $a->accessControlledActions()); ?>';
+  $machine_name = '<?php echo $a->m; ?>';
+  $actions = '<?php print $a->access_controlled_actions->value; ?>';
   $permissions = [];
   return $permissions;
 }

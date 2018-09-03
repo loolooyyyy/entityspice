@@ -1,8 +1,8 @@
-<?php print $a->php(); ?>
+<?php print $a->php; ?>
 
 /**
  * @file
- * <?php print $a->machineName(); ?>'s bundle classes.
+ * <?php print $a->m; ?>'s bundle classes.
  *
 // TODO custom fields.
 // TODO deny delete.
@@ -13,7 +13,7 @@
 /**
  * The class used for bundle entities
  */
-class <?php echo $a->camelNameUcFirst(); ?>Bundle extends Entity {
+class <?php echo $a->uc; ?>Bundle extends Entity {
 
   /**
    * String: Machine name of bundle entity.
@@ -25,7 +25,7 @@ class <?php echo $a->camelNameUcFirst(); ?>Bundle extends Entity {
    */
   public $label;
 
-<?php if($a->bundleHasLock()): ?>
+<?php if($a->bundle_has_lock->value): ?>
   /**
    * Boolean: Whether deleting this bundle is allowed or not.
    */
@@ -33,7 +33,7 @@ class <?php echo $a->camelNameUcFirst(); ?>Bundle extends Entity {
 <?php endif; ?>
 
   public function __construct(array $values = []) {
-    parent::__construct($values, '<?php print $a->bundleMachineName(); ?>');
+    parent::__construct($values, '<?php print $a->bundle_machine_name->value; ?>');
   }
 }
 
@@ -41,15 +41,15 @@ class <?php echo $a->camelNameUcFirst(); ?>Bundle extends Entity {
  * The controller class for entity bundles contains methods for CRUD
  * operations. The load method is inherited from the default controller.
  */
-class <?php print $a->camelNameUcFirst(); ?>Controller extends EntityAPIControllerExportable {
+class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
 
   /**
    * @see parent
    */
   final public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    <?php if($a->bundleHasLock()): ?>
+    <?php if($a->bundle_has_lock->value): ?>
     foreach($ids as $id) {
-      if(<?php echo $a->sMachineName(); ?>_bundle_has_entity($id)) {
+      if(<?php echo $a->s; ?>_bundle_has_entity($id)) {
         throw new RuntimeException('entities of this type exist, thus it is locked: [ ' . $id . ']');
       }
     }
@@ -59,7 +59,7 @@ class <?php print $a->camelNameUcFirst(); ?>Controller extends EntityAPIControll
   }
 
   public function __construct() {
-    parent::__construct('<?php print $a->bundleMachineName(); ?>');
+    parent::__construct('<?php print $a->bundle_machine_name->value; ?>');
   }
 }
 
@@ -67,9 +67,9 @@ class <?php print $a->camelNameUcFirst(); ?>Controller extends EntityAPIControll
 /**
  * Entity Bundle UI controller.
  */
-class <?php print $a->camelNameUcFirst(); ?>BundleUIController extends EntityDefaultUIController {
+class <?php print $a->uc; ?>BundleUIController extends EntityDefaultUIController {
   public function __construct($entity_info) {
-    parent::__construct('<?php print $a->bundleMachineName(); ?>', $entity_info);
+    parent::__construct('<?php print $a->bundle_machine_name->value; ?>', $entity_info);
   }
 }
 
@@ -81,8 +81,8 @@ class <?php print $a->camelNameUcFirst(); ?>BundleUIController extends EntityDef
 *
 * @return \Entity created bundle.
 */
-function <?php echo $a->sMachineName() ?>_bundle_create(array $values = []) {
-  $bundle_machine_name = '<?php echo $a->bundleMachineName(); ?>';
+function <?php echo $a->s ?>_bundle_create(array $values = []) {
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
   return entity_get_controller($bundle_machine_name)->create($values);
 }
 
@@ -94,15 +94,15 @@ function <?php echo $a->sMachineName() ?>_bundle_create(array $values = []) {
 * @return array.
 *   An bundle entity array or FALSE if $name does not exist.
 */
-function <?php echo $a->sMachineName() ?>_bundle_load($name) {
-  $bundle_machine_name = '<?php echo $a->bundleMachineName(); ?>';
+function <?php echo $a->s ?>_bundle_load($name) {
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
 
   $bundles = entity_load_multiple_by_name($bundle_machine_name, [$name]);
   foreach ($bundles as $bundle) {
     return $bundle;
   }
 
-  throw new <?php echo $a->camelNameUcFirst(); ?>Exception('no such bundle: ' . $name);
+  throw new <?php echo $a->uc; ?>Exception('no such bundle: ' . $name);
 }
 
 /**
@@ -110,7 +110,7 @@ function <?php echo $a->sMachineName() ?>_bundle_load($name) {
 *
 * @param entity $bundle the bundle to delete (bundle object)
 */
-function <?php echo $a->sMachineName(); ?>_bundle_delete($bundle) {
+function <?php echo $a->s; ?>_bundle_delete($bundle) {
   $bundle->delete();
 }
 
@@ -119,7 +119,7 @@ function <?php echo $a->sMachineName(); ?>_bundle_delete($bundle) {
 *
 * @param entity $bundle the bundle to save (bundle object)
 */
-function <?php echo $a->sMachineName(); ?>_bundle_save($bundle) {
+function <?php echo $a->s; ?>_bundle_save($bundle) {
   $bundle->save();
 }
 
@@ -128,24 +128,24 @@ function <?php echo $a->sMachineName(); ?>_bundle_save($bundle) {
 /**
  * Gets an array of all bundles, keyed by the name.
  */
-function <?php echo $a->sMachineName(); ?>_get_bundles() {
-  $bundle_machine_name = '<?php echo $a->bundleMachineName(); ?>';
+function <?php echo $a->s; ?>_get_bundles() {
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
   return entity_load_multiple_by_name($bundle_machine_name);
 }
 
 /**
  * Generate a list of bundle names of a given entity type.
  */
-function <?php echo $a->sMachineName(); ?>_get_bundles_names() {
-  $bundles = <?php echo $a->sMachineName(); ?>_get_bundles();
+function <?php echo $a->s; ?>_get_bundles_names() {
+  $bundles = <?php echo $a->s; ?>_get_bundles();
   return array_keys($bundles);
 }
 
 /**
  * TODO does it need check plain?
  */
-function <?php echo $a->sMachineName(); ?>_get_bundles_options_list($check_plain = TRUE) {
-  $bundles = <?php echo $a->sMachineName(); ?>_get_bundles();
+function <?php echo $a->s; ?>_get_bundles_options_list($check_plain = TRUE) {
+  $bundles = <?php echo $a->s; ?>_get_bundles();
   $ret = [];
   foreach ($bundles as $bundle => $info) {
     $ret[$bundle] = $check_plain ? check_plain($info->label) : $info->label;
@@ -156,10 +156,10 @@ function <?php echo $a->sMachineName(); ?>_get_bundles_options_list($check_plain
 /**
 * Check if entities of this bundle exist.
 */
-function <?php echo $a->sMachineName(); ?>_bundle_has_entity($name) {
-  $bundle_machine_name = '<?php echo $a->bundleMachineName(); ?>';
+function <?php echo $a->s; ?>_bundle_has_entity($name) {
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', '<?php echo $a->machineName(); ?>');
+  $query->entityCondition('entity_type', '<?php echo $a->m; ?>');
   $query->entityCondition('bundle', $name); // IS THIS RIGHT?
   return $query->count()->execute() > 0;
 }

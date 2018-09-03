@@ -3,7 +3,7 @@
 /**
  * Check to see if $account is the owner of $entity.
  */
-function <?php echo $a->sMachineName(); ?>_entity_access_is_self($entity, $account) {
+function <?php echo $a->s; ?>_entity_access_is_self($entity, $account) {
   if ($entity == NULL) {
     return FALSE;
   }
@@ -17,13 +17,13 @@ function <?php echo $a->sMachineName(); ?>_entity_access_is_self($entity, $accou
 /**
  * Check to see if $user has the $op access on $entity.
  *
-<?php if($a->hasBundle()): ?>
+<?php if($a->has_bundle->value): ?>
 * If the entity is null, check if user has $op access on entity type or bundle.
 <?php else: ?>
 * If the entity is null, check if user has $op access on entity type.
 <?php endif; ?>
  */
-function <?php echo $a->sMachineName(); ?>_entity_access($op,<?php if($a->hasBundle()): ?> $bundle = NULL,<?php endif; ?> $entity = NULL, $user = NULL) {
+function <?php echo $a->s; ?>_entity_access($op,<?php if($a->has_bundle->value): ?> $bundle = NULL,<?php endif; ?> $entity = NULL, $user = NULL) {
   $access_controlled_actions = NULL;
   $machine_name = NULL;
 
@@ -49,18 +49,18 @@ function <?php echo $a->sMachineName(); ?>_entity_access($op,<?php if($a->hasBun
     return TRUE;
   }
 
-<?php if($a->hasBundle()): ?>
+<?php if($a->has_bundle->value): ?>
   if ($bundle !== NULL && user_access("$machine_name - $bundle - $op", $account)) {
     return TRUE;
   }
 <?php endif; ?>
 
-  $self = <?php echo $a->sMachineName(); ?>_entity_access_is_self($entity, $account);
+  $self = <?php echo $a->s; ?>_entity_access_is_self($entity, $account);
   if ($self && user_access("own - $machine_name - $op", $account)) {
     return TRUE;
   }
 
-<?php if($a->hasBundle()): ?>
+<?php if($a->has_bundle->value): ?>
   if ($self && $bundle !== NULL && user_access("own - $machine_name - $bundle - $op", $account)) {
     return TRUE;
   }

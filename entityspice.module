@@ -16,24 +16,9 @@ require_once 'entityspice_error.inc';
  * be returned. It must be a simple immutable value class with no logic. Else,
  * it is a design error, a disaster.
  */
-class EntitySpiceConfig {
+class ESConfig {
 
-  private $machine_name;
-
-  private $label_name;
-
-  private $camel_name_upper_first;
-
-  /**
-   * A string prepended to functions (usually underscore) to exclude them from
-   * global namespace, so accidentally a hook is not implemented.
-   *
-   * @var string
-   */
-  private $safe;
-
-
-  private $tokens = [];
+  private $t;
 
   /**
    * @param $machine_name string machine name of entity this config belongs to.
@@ -42,668 +27,413 @@ class EntitySpiceConfig {
    * is not implemented.
    */
   public function __construct($machine_name, $safe = TRUE) {
-    if ($err = EntitySpiceToken::validate(EntitySpiceToken::MACHINE_NAME, $machine_name)) {
-      throw new RuntimeException($err);
-    }
-    if ($err = EntitySpiceToken::validate(EntitySpiceToken::BOOL, $machine_name)) {
-      throw new RuntimeException($err);
-    }
+    ESToken::machine_name('machine_name', $machine_name)->validate();
+    ESToken::bool('safe', $safe)->validate();
 
-    $this->machine_name = $machine_name;
-
-    $label_name = ucwords(str_replace('_', ' ', $machine_name));
-    $uc = str_replace(' ', '', $this->label_name);
-
-    $tokens['php'] = EntitySpiceToken::non_override('php', '<' . '?' . 'php');
-    $tokens['safe'] = EntitySpiceToken::non_override('safe', $safe ? '_' : '');
-
-    $tokens['camelNameUcFirst'] = EntitySpiceToken::non_override('camelNameUcFirst', $uc);
-    $tokens['camelNameLcFirst'] = EntitySpiceToken::non_override('camelNameLcFirst', lcfirst($uc));
-    $tokens['sMachineName'] = EntitySpiceToken::non_override('camelNameLcFirst', $this->safe . $machine_name);
-    $tokens['MachineName'] = EntitySpiceToken::non_override('camelNameLcFirst', $machine_name);
-
-    $tokens['humanName'] = EntitySpiceToken::label('humanName', $label_name);
-  }
-
-  function idKey() {
-    return "id";
-  }
-
-  function baseTable() {
-    return $this->machine_name;
-  }
-
-  function isFieldable() {
-    return TRUE;
-  }
-
-  function accessControlledActions() {
-    return [
-      'administer',
-      'create',
-      'delete',
-      'view',
-      'archive',
-    ];
-  }
-
-  function hasDevelSupport() {
-    return TRUE;
-  }
-
-  function hasCanDeleteHook() {
-    return FALSE;
-  }
-
-  // ___________________________________________________________________ BUNDLE
-
-  function hasBundle() {
-    return TRUE;
-  }
-
-  function bundleMachineName() {
-    return $this->machine_name . '_bundle';
-  }
-
-  function bundleKeyName() {
-    return "bid";
-  }
-
-  function bundleTable() {
-    return $this->machine_name . '_bundle';
-  }
-
-  function bundleHasLock() {
-    return TRUE;
-  }
-
-  function bundleIsEntity() {
-    return TRUE;
-  }
-
-  function bundleSubmitRedirect() {
-    return 'admin/structure/' . $this->machine_name;
-  }
-
-  function bundleDeleteRedirect() {
-    return 'admin/structure/' . $this->machine_name;
-  }
-
-  function isBundleFieldable() {
-    return TRUE;
-  }
+    $tokens['php'] = ESToken::non_override('php', '<' . '?' . 'php');
+    $tokens['safe'] = ESToken::non_override('safe', $safe ? '_' : '');
+    $tokens['machine_name'] = ESToken::non_override('machine_name', $machine_name);
+    $tokens['s_machine_name'] = ESToken::non_override(
+      'sMachineName',
+      ($safe ? '_' : '') . $machine_name,
+      'namespace-safe machine name');
+    $tokens['sane'] = ESToken::non_override(
+      'sane',
+      ($safe ? '_' : '') . $machine_name,
+      'namespace-safe machine name');
 
 
-  // _________________________________________________________________ REVISION
+    $tokens['human_name'] = ESToken::label(
+      'human_name',
+      ucwords(str_replace('_', ' ', $machine_name)),
+      'human readable name, aka label.');
 
-  function hasRevision() {
-    return FALSE;
-  }
+    $uc = str_replace(' ', '', $tokens['human_name']->value);
+    $tokens['uc'] = ESToken::non_override('uc', $uc, 'upper case first, machine camel name');
+    $tokens['lc'] = ESToken::non_override('lc', lcfirst($uc), 'lower case first, machine camel name');
 
-  function revisionTable() {
-    return $this->machine_name . '_revision';
-  }
+    $tokens['id_key'] = ESToken::machine_name(
+      'id_key',
+      'id',
+      'id key, on entity object, just like nid on $node->nid');
+    $tokens['base_table'] = ESToken::machine_name(
+      'base_table',
+      $machine_name,
+      'database table name');
+    $tokens['is_fieldable'] = ESToken::bool(
+      'is_fieldable',
+      TRUE,
+      'whether if this is a fieldable entity type, or a non-fieldable one');
 
-  function revisionKeyName() {
-    return 'rid';
-  }
+    $tokens['access_controlled_actions'] = ESToken::arr(
+      'access_controlled_actions',
+      [
+        'administer',
+        'create',
+        'delete',
+        'view',
+        'archive',
+      ],
+      'actions on the entity, which are controlled by permission, just like ' .
+      'node creation, node view, ...; ONLY PROVIDE THE VERB, such as [view] or' .
+      ' [create] or ... (view own is added automatically)');
 
-  function hasRevisionLog() {
-    return TRUE;
-  }
+    $tokens['has_devel_support'] = ESToken::bool(
+      'has_devel_support',
+      TRUE,
+      'whether if this entity type has special support for devel module, just like node/%nid/devel');
+    $tokens['has_can_delete_hook'] = ESToken::bool(
+      'has_can_delete_hook',
+      TRUE,
+      'whether if a can_delete_hook is added, so other modules can lock ' .
+      'entities of this type and prevent deletion');
 
-  // _____________________________________________________________________ PATH
+    $e_path = str_replace('_', '-', $machine_name);
 
-  function parentAdminPath() {
-    $p = str_replace('_', '-', $this->machine_name);
-    return 'admin/structure/' . $p;
-  }
+    $tokens['has_bundle'] = ESToken::bool(
+      'has_bundle',
+      TRUE,
+      'whether if this entity type supports bundles, just like node types');
+    $tokens['bundle_machine_name'] = ESToken::machine_name(
+      'bundle_machine_name',
+      $machine_name . '_bundle');
+    $tokens['bundle_key_name'] = ESToken::machine_name(
+      'bundle_key_name',
+      'bid',
+      'bundle key name on entity object just like [type] on node objects');
+    $tokens['bundle_table'] = ESToken::machine_name(
+      'bundle_table',
+      $machine_name . '_bundle',
+      'the table holding entity bundles in database');
+    $tokens['bundle_has_lock'] = ESToken::bool(
+      'bundle_has_lock',
+      TRUE,
+      'whether if bundles are lockable and deletion can be prevented, ' .
+      'such as when entities of this bundle still exist');
+    $tokens['bundle_is_entity'] = ESToken::bool(
+      'bundle_is_entity',
+      TRUE,
+      'whether if bundles are entity themselves');
 
-  function parentUserlandPath() {
-    $p = str_replace('_', '-', $this->machine_name);
-    return $p;
-  }
+    // probably should change to parent admin path, but then we need a
+    // isOverridden flag to not change it then, which will blow up the whole
+    // token logic and all. so just forget it.
+    $tokens['bundle_redirect'] = ESToken::uri(
+      'bundle_redirect',
+      'admin/structure/' . $e_path,
+      'the path to redirect user to, after when a new bundle is created or removed');
+    $tokens['is_bundle_fieldable'] = ESToken::bool(
+      'is_bundle_fieldable',
+      TRUE,
+      'whether if bundles are fieldable themselves');
 
-  function entityDeleteRedirect() {
-    return '/';
+    $tokens['has_revision'] = ESToken::bool(
+      'has_revision',
+      FALSE,
+      'whether if the entity type supports revisions, just like node revisions');
+    $tokens['revision_table'] = ESToken::machine_name(
+      'revision_table',
+      $machine_name . '_revision',
+      'the table holding entity revisions in database');
+    $tokens['revision_key_name'] = ESToken::machine_name(
+      'revision_key_name',
+      'rid',
+      'revision key name on entity object just like [rid] on node objects');
+    $tokens['has_revision_log'] = ESToken::bool(
+      'has_revision_log',
+      TRUE,
+      'whether if the entity type has revision logs just like node');
+
+    $tokens['parent_admin_path'] = ESToken::uri(
+      'parent_admin_path',
+      'admin/structure/' . $e_path
+    );
+    $tokens['parent_userland_path'] = ESToken::uri(
+      'parent_userland_path',
+      $e_path,
+      'the path on which list of entities are accessible, just like /node'
+    );
+    $tokens['entity_delete_redirect_path'] = ESToken::uri(
+      'entity_delete_redirect_path',
+      $e_path,
+      'the path to redirect the user to, when an entity is deleted. A more complex logic can be later added in code.'
+    );
+
+    $tokens['has_inline_entity_form_support'] = ESToken::bool(
+      'has_inline_entity_form_support',
+      TRUE,
+      'whether if InlineEntityForm module is supported.');
+
+    $this->t = $tokens;
   }
 
   function uriCallback() {
     throw new RuntimeException("uriCallback");
   }
 
-
-  // ______________________________________________________________________ IEF
-
-  function hasInlineEntityFormSupport() {
-    return TRUE;
-  }
-
-  // ______________________________________________________________________ ETC
-
-  final function php() {
-    return '<' . '?' . 'php';
-  }
-
-  final function all() {
-    return get_class_methods('EntitySpiceConfig');
-  }
-
   // _________________________________________________________________ OVERRIDE
 
-  /**
-   * Why use __call and so much trouble?
-   *
-   * Because I later realized I need this. And I'm not going to user arrays over
-   * object. An object clearly defines the keys (by using methods);
-   *
-   * Magic getter is not used. Because F*** this ****.
-   */
-  function __call($name, $arguments) {
-    return in_array($name, $this->override, TRUE)
-      ? $this->override[$name]
-      : call_user_func([$this, $name]);
+  function __get($name) {
+    if ($name === 'php') {
+      return '<' . '?php';
+    }
+    if ($name === 's') {
+      $name = 'sane';
+    }
+    if ($name === 'm') {
+      $name = 'machine_name';
+    }
+    foreach ($this->t as $token) {
+      if ($name === $token->name) {
+        //        echo "haha [" . $token->name . "][" . $token->value . "][" . $token->type . "]\n";
+        return $token->type === ESToken::NON_OVERRIDABLE ? $token->value : $token;
+      }
+    }
+    throw new RuntimeException("no such token: [$name]");
   }
 
-  function override($name, $value) {
-    if (!is_string($name) || !is_string($value)) {
-      throw new RuntimeException('bad data type, need string');
-    }
-    if (!in_array($name, $this->all(), TRUE)) {
-      throw new RuntimeException('no such key: ' . $name);
-    }
-    if (in_array($name, $this->non_over)) {
-      throw new RuntimeException('key can not be overridden: ' . $name);
-    }
-    $this->override[$name] = $value;
+  function __set($name, $value) {
+    $this->__get($name)->set($value)->validate();
   }
 
-  function overridable() {
-    $all = $this->all();
-    $none = $this->non_over;
-    $diff = array_diff($all, $none);
-    return $diff;
-  }
-
-  /**
-   * Bad idea.
-   *
-   * returns an array: ['description', 'default value']
-   */
-  function description($name) {
-    if (in_array($name, $this->non_over)) {
-      return ['non overridable method', '?'];
+  function names() {
+    $ret = [];
+    foreach ($this->t as $name => $token) {
+      if ($token->type !== ESToken::NON_OVERRIDABLE) {
+        $ret[] = $name;
+      }
     }
-
-    $dummy = new EntitySpiceConfig($this->machine_name);
-    switch ($name) {
-
-      case 'safe':
-        return [
-          'whether if a string prepended to functions (usually ' .
-          'underscore)to exclude them from global namespace, so ' .
-          ' a hook is not accidentally implemented.',
-          'TRUE',
-        ];
-
-      case 'camelNameLcFirst':
-        return ['machineNameButLikeThis', $dummy->camelNameLcFirst()];
-
-      case 'camelNameUcFirst':
-        return ['MachineNameButLikeThis', $dummy->camelNameUcFirst()];
-
-      case 'sMachineName':
-        return [
-          'safe() and machineName() concatenated. see description for [safe]',
-          $dummy->sMachineName(),
-        ];
-
-      case 'machineName':
-        return ['machine name for the generated entity type.', 'N/A'];
-
-      case 'humanName':
-        return [
-          'human readable name (label) for the generated entity type.',
-          $dummy->humanName(),
-        ];
-
-      case 'idKey':
-        return [
-          'id property on entity object (just like nid on $node->nid)',
-          $dummy->idKey(),
-        ];
-
-      case 'baseTable':
-        return [
-          'name of the database table',
-          $dummy->baseTable(),
-        ];
-
-      case 'isFieldable':
-        return [
-          'whether if generated entity type supports fields.',
-          $dummy->isFieldable(),
-        ];
-
-      case 'accessControlledActions':
-        return [
-          'name of supported actions on entity, whose permission is ' .
-          'controlled, such as view, create...',
-          implode(', ', $dummy->accessControlledActions()),
-        ];
-
-      case 'hasDevelSupport':
-        return [
-          'whether if generated entity type directly supports devel module ' .
-          '(a devel page is accessible for each entity, just like ' .
-          '/node/NID/devel',
-          $dummy->hasDevelSupport(),
-        ];
-
-      case 'hasCanDeleteHook':
-        return [
-          'whether if a hook_ENTITY_TYPE_can_delete() is added, so other ' .
-          ' modules can decide and prevent an entity from being deleted',
-          $dummy->hasCanDeleteHook(),
-        ];
-
-      case 'hasBundle':
-        return [
-          'whether if entity type support bundles',
-          $dummy->hasBundle(),
-        ];
-
-      case 'bundleMachineName':
-        return [
-          'machine name of entity type\'s bundle, if you do not like MACHINE_NAME_bundle',
-          $dummy->bundleMachineName(),
-        ];
-
-      case 'bundleKeyName':
-        return [
-          'name of the property denoting an entity\'s bundle, on the entity object',
-          $dummy->bundleKeyName(),
-        ];
-
-      case 'bundleTable':
-        return [
-          'if bundle is an entity, the table holding the bundles',
-          $dummy->bundleTable(),
-        ];
-
-      case 'bundleHasLock':
-        return [
-          'whether if bundles are lockable, so they can not be deleted',
-          $dummy->bundleHasLock(),
-        ];
-
-      case 'bundleIsEntity':
-        return [
-          'whether if bundles are entity themselves',
-          $dummy->bundleIsEntity(),
-        ];
-
-      case 'bundleSubmitRedirect':
-        return [
-          'the uri to redirect to, when a new bundle is saved',
-          $dummy->bundleSubmitRedirect(),
-        ];
-
-      case 'bundleDeleteRedirect':
-        return [
-          'the uri to redirect to, when a bundle is deleted',
-          $dummy->bundleDeleteRedirect(),
-        ];
-
-      case 'isBundleFieldable':
-        return [
-          'whether if bundles are fieldable themselves',
-          $dummy->isBundleFieldable(),
-        ];
-
-      case 'hasRevision':
-        return [
-          'whether if the entity is revision-able',
-          $dummy->hasRevision(),
-        ];
-
-      case 'revisionTable':
-        return [
-          'name of the table holding entity revisions',
-          $dummy->revisionTable(),
-        ];
-
-      case 'revisionKeyName':
-        return [
-          'name of the key on entity object holding it\'s revision id',
-          $dummy->revisionKeyName(),
-        ];
-
-      case 'hasRevisionLog':
-        return [
-          'whether if each revision has a log (stored in DB)',
-          $dummy->hasRevisionLog(),
-        ];
-
-      case 'parentAdminPath':
-        return [
-          'the root path for entity type\'s administration pages',
-          $dummy->parentAdminPath(),
-        ];
-
-      case 'parentUserlandPath':
-        return [
-          'the root path for entities themselves',
-          $dummy->parentUserlandPath(),
-        ];
-
-      case 'entityDeleteRedirect':
-        return [
-          'the path to redirect to when an entity is deleted',
-          $dummy->entityDeleteRedirect(),
-        ];
-
-      case 'hasInlineEntityFormSupport':
-        return [
-          'whether if inline entity form module is supported',
-          $dummy->hasInlineEntityFormSupport(),
-        ];
-
-      case 'uriCallback':
-        return ['hmm?', '??'];
-    }
-    throw new RuntimeException('no description for: ' . $name);
+    return $ret;
   }
-
-
-  function process($name, $value) {
-    switch ($name) {
-      case 'accessControlledActions':
-        return json_decode($value);
-
-      case 'safe':
-      case 'hasRevision':
-      case 'bundleHasLock':
-      case 'bundleIsEntity':
-      case 'isBundleFieldable':
-      case 'isFieldable':
-      case 'hasDevelSupport':
-      case 'hasCanDeleteHook':
-      case 'hasInlineEntityFormSupport':
-      case 'hasRevisionLog':
-      case 'hasBundle':
-        return EntitySpiceToken::validate($value, EntitySpiceToken::BOOL);
-
-      default:
-        return $value;
-    }
-  }
-
-  function validate($name, $value) {
-    $type = NULL;
-    switch ($name) {
-      case 'humanName':
-        $type = EntitySpiceToken::LABEL;
-        break;
-
-      case 'idKey':
-      case 'bundleKeyName':
-      case 'bundleTable':
-      case 'bundleMachineName':
-      case 'revisionKeyName':
-      case 'baseTable':
-      case 'revisionTable':
-        $type = EntitySpiceToken::MACHINE_NAME;
-        break;
-
-      case 'accessControlledActions':
-        $type = EntitySpiceToken::FLAT_STRING_ARRAY;
-        break;
-
-      case 'safe':
-      case 'hasRevision':
-      case 'bundleHasLock':
-      case 'bundleIsEntity':
-      case 'isBundleFieldable':
-      case 'isFieldable':
-      case 'hasDevelSupport':
-      case 'hasCanDeleteHook':
-      case 'hasInlineEntityFormSupport':
-      case 'hasRevisionLog':
-      case 'hasBundle':
-        $type = EntitySpiceToken::BOOL;
-        break;
-
-      case 'parentAdminPath':
-      case 'parentUserlandPath':
-      case 'bundleSubmitRedirect':
-      case 'entityDeleteRedirect':
-      case 'bundleDeleteRedirect':
-        $type = EntitySpiceToken::URI;
-        break;
-
-      case 'uriCallback':
-        $type = EntitySpiceToken::FUNC;
-        break;
-
-      default:
-        $type = EntitySpiceToken::UNKNOWN;
-    }
-
-    return EntitySpiceToken::validate($value, $type);
-  }
-
-  private $non_over = [
-    '__construct',
-    '__call',
-
-    'php',
-    'safe',
-    'camelNameLcFirst',
-    'camelNameUcFirst',
-    'machineName',
-    'sMachineName',
-
-    'all',
-    'description',
-    'overridable',
-    'override',
-    'validate',
-    'process',
-  ];
 
 }
 
-class EntitySpiceToken {
+class ESToken {
 
-  const NON_OVERRIDABLE = -2;
+  const NON_OVERRIDABLE = 0;
 
-  const UNKNOWN = -1;
+  const UNKNOWN = 1;
 
-  const MACHINE_NAME = 0;
+  const MACHINE_NAME = 2;
 
-  const LABEL = 1;
+  const LABEL = 3;
 
-  const URI = 3;
+  const URI = 4;
 
-  const BOOL = 3;
+  const BOOL = 5;
 
-  const FLAT_STRING_ARRAY = 4;
+  const FLAT_STRING_ARRAY = 6;
 
-  const FUNC = 5;
-
-
-  var $type;
-
-  var $name;
-
-  var $value;
+  const FUNC = 7;
 
 
-  function __construct($type, $name, $value = NULL) {
-    switch ($type) {
-      case EntitySpiceToken::MACHINE_NAME:
-      case EntitySpiceToken::LABEL:
-      case EntitySpiceToken::URI:
-      case EntitySpiceToken::BOOL:
-      case EntitySpiceToken::FLAT_STRING_ARRAY:
-      case EntitySpiceToken::FUNC:
-        break;
-      default:
-        throw new RuntimeException("unknown type: [$type] for [$name] value [$value]");
+  private $type;
+
+  private $name;
+
+  private $value;
+
+  private $desc;
+
+
+  function __construct($type, $name, $value = NULL, $desc = NULL) {
+    if ($type < 0 || $type > 7) {
+      throw new RuntimeException("unknown type: [$type] for [$name] with value [$value]");
     }
-
     $this->type = $type;
     $this->name = $name;
     $this->set($value);
+    $this->desc = $desc;
   }
 
   function set($value) {
-    if (($err = EntitySpiceToken::validate($value, $this->type)) !== '') {
-      throw new RuntimeException("$err");
-    }
     $this->value = $value;
     return $this;
   }
 
-  static function validate($value, $type) {
-    switch ($type) {
-      case NULL:
-        return "null value is not valid of type [$type]";
+  function get() {
+    return $this->type === ESToken::FLAT_STRING_ARRAY ? json_decode($this->value) : $this->value;
+  }
 
-      case EntitySpiceToken::MACHINE_NAME:
-        $err = "bad [machine name]: [$value]: must match the regex: ^[a-z][_0-9a-z]*?$";
-        if (!is_string($value) || empty($value) || !preg_match('#^[a-z][_0-9a-z]*?$#', $value)) {
-          return $err;
-        }
-        break;
+  function __get($name) {
+    if (!in_array($name, [
+      'value',
+      'name',
+      'type',
+      'desc',
+      'isValid',
+      'error',
+    ], TRUE)) {
+      throw new RuntimeException('can not access any property other than name, type, value, desc, isValid and error');
+    }
+    switch ($name) {
+      case 'type':
+        return $this->type;
 
-      case EntitySpiceToken::LABEL:
-        $err = "bad [label]: [$value]";
-        $err .= ": must match the regex: ^[A-Za-z][_0-9a-zA-Z ]*?$ Don't worry much you can change it later with much less restrictions.";
-        if (!is_string($value) || empty($value) || !preg_match('#^[A-Za-z][_0-9a-zA-Z ]*?$#', $value)) {
-          return $err;
-        }
-        break;
+      case 'name':
+        return $this->name;
 
-      case EntitySpiceToken::URI:
-        $err = "bad [uri]: [$value] this value can be changed later.";
-        if ($value === '\<front\>') {
-          break;
-        }
-        if (!is_string($value) || empty($value)) {
-          return $err;
-        }
-        if (conut(str_replace('/', '', $value)) === 0) {
-          return $err;
-        }
-        if (!ctype_alnum(str_replace('/', '', $value)) === 0) {
-          return $err;
-        }
-        if (strlen(str_replace('//', '', $value)) !== strlen($value)) {
-          return $err;
-        }
-        break;
+      case 'value':
+        return $this->get();
 
-      case EntitySpiceToken::BOOL:
-        $err = "bad [bool]: [$value]";
-        $err .= ': valid boolean values: y, n, t, f, false, true, yes, no ' .
-          '(any of them lower or upper case des not matter), 0, 1 (as digit' .
-          ' or letter). empty is NOT a valid value.';
-        if (_entityspice_v_boolean($value) === NULL) {
-          return $err;
-        };
-        break;
+      case 'desc':
+        return $this->desc;
 
-      case EntitySpiceToken::FLAT_STRING_ARRAY:
-        $err = 'bad [array]: array is not a valid json array, or contains non-alphanum values';
-        $json = NULL;
-        try {
-          $json = json_decode($value);
-        } catch (Exception $e) {
-          return $err;
-        }
-        if ($json === NULL) {
-          return $err;
-        }
-        foreach ($json as $item) {
-          if (!ctype_alnum($item)) {
-            return $err;
-          }
-        }
-        break;
+      case 'error':
+        return $this->error();
 
-      case EntitySpiceToken::FUNC:
-        $err = "bad [function name]: [$value]: must match the regex: ^[a-z][_0-9a-z]*?$";
-        if (!is_string($value) || empty($value) || !preg_match('#^[a-z][_0-9a-z]*?$#', $value)) {
-          return $err;
-        }
-        break;
-
-      case EntitySpiceToken::NON_OVERRIDABLE:
-        return "can not validate value of type [non-overridable]";
-
-      case EntitySpiceToken::UNKNOWN:
-        return "do not know how to validate [$value] of type [unknown]";
+      case 'isValid':
+        return $this->isValid();
 
       default:
-        return "do not know how to validate [$value] of type [$type]";
+        throw new RuntimeException('unknown property: ' . $name);
+    }
+  }
+
+
+  function validate() {
+    if ($err = self::check($this->value, $this->type)) {
+      throw new RuntimeException($err);
+    }
+    return $this;
+  }
+
+  private function isValid() {
+    return $this->error() ? FALSE : TRUE;
+  }
+
+  private function error() {
+    return self::check($this->value, $this->type);
+  }
+
+
+  static function check($value, $type, $name = NULL) {
+    if ($value === NULL) {
+      $err = "$type::$name -> [null] is not valid";
+      return $err;
+    }
+    if ($type === ESToken::MACHINE_NAME) {
+      $regex = '/^[a-z][_0-9a-z]*?$/';
+      $err = "MACHINE_NAME::$name -> [$value] must match the regex: $regex";
+      if (!is_string($value) || empty($value) || !preg_match($regex, $value)) {
+        return $err;
+      }
+    }
+    elseif ($type === ESToken::LABEL) {
+      $regex = '/^[A-Za-z][_0-9a-zA-Z ]*?$/';
+      $err = "LABEL::$name -> [$value] must match the regex: $regex. " .
+        " Labels are constrained for now BUT can be changed later (after the module is generated)";
+      if (!is_string($value) || empty($value) || !preg_match($regex, $value)) {
+        return $err;
+      }
+    }
+    elseif ($type === ESToken::URI) {
+      // TODO make this better and more rigorous? or perhaps it doesn't matteR?
+      $err = "URI::$name -> [$value] is not a valid uri. " .
+        " URIs are constrained for now BUT can be changed later (after the module is generated)";
+      if ($value === '\<front\>') {
+        return '';
+      }
+      if (!is_string($value) || empty($value)) {
+        return $err;
+      }
+      if (conut(str_replace('/', '', $value)) === 0) {
+        return $err;
+      }
+      if (!ctype_alnum(str_replace('/', '', $value)) === 0) {
+        return $err;
+      }
+      if (strlen(str_replace('//', '', $value)) !== strlen($value)) {
+        return $err;
+      }
+    }
+    elseif ($type === ESToken::BOOL) {
+      $err = "BOOL::$name -> [$value] is not a valid boolean. valid values: " .
+        'y, n, t, f, false, true, yes, no, 0, 1 as digit or string ' .
+        '(strings can be upper or lower case). empty is NOT valid';
+      if (_entityspice_v_boolean($value) === NULL) {
+        return $err;
+      };
+    }
+    elseif ($type === ESToken::FLAT_STRING_ARRAY) {
+      $err = "ARRAY::$name -> [$value] must be a valid FLAT json ARRAY (not map), containing only ascii alpha-num.";
+      $json = NULL;
+      try {
+        $json = json_decode($value);
+      } catch (Exception $e) {
+        return $err;
+      }
+      if ($json === NULL) {
+        return $err;
+      }
+      $i = 0;
+      foreach ($json as $index => $item) {
+        if ($i != $index) {
+          return $err;
+        }
+        $i++;
+        if (!ctype_alnum($item)) {
+          return $err;
+        }
+      }
+    }
+    elseif ($type === ESToken::FUNC) {
+      $regex = '/^[a-z][_0-9a-z]*?$/';
+      $err = "FUNCTION_NAME::$name -> [$value] must match the regex: $regex";
+      if (!is_string($value) || empty($value) || !preg_match($regex, $value)) {
+        return $err;
+      }
+    }
+    elseif ($type === ESToken::NON_OVERRIDABLE) {
+      $err = "NON_OVERRIDABLE::$name -> [$value] can not be overridden.";
+      return $err;
+    }
+    else {
+      $err = "UNKNOWN::$name -> [$value] do not know how to validate.";
+      return $err;
     }
     return '';
   }
 
 
-  static function non_override($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::NON_OVERRIDABLE, $value);
+  static function non_override($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::NON_OVERRIDABLE, $name, $value, $desc);
   }
 
-  static function unknown($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::UNKNOWN, $value);
+  static function unknown($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::UNKNOWN, $value, $desc);
   }
 
-  static function machine_name($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::MACHINE_NAME, $name, $value);
+  static function machine_name($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::MACHINE_NAME, $name, $value, $desc);
   }
 
-  static function label($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::LABEL, $name, $value);
+  static function label($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::LABEL, $name, $value, $desc);
   }
 
-  static function uri($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::URI, $name, $value);
+  static function uri($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::URI, $name, $value, $desc);
   }
 
-  static function bool($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::BOOL, $name, $value);
+  static function bool($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::BOOL, $name, $value, $desc);
   }
 
-  static function arr($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::FLAT_STRING_ARRAY, $name, $value);
+  static function arr($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::FLAT_STRING_ARRAY, $name, $value, $desc);
   }
 
-  static function func($name, $value) {
-    return new EntitySpiceToken(EntitySpiceToken::FUNC, $name, $value);
+  static function func($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::FUNC, $name, $value, $desc);
   }
 
-}
-
-
-function _entityspice_validate_machine_name($machine_name) {
-  if (empty($machine_name)
-    || !is_string($machine_name)
-    || !ctype_alnum($machine_name)
-    || ctype_digit($machine_name[0])
-    || !ctype_lower($machine_name)
-    || $machine_name[0] === '_') {
-    return "bad machine name: [$machine_name]";
-  }
-  return NULL;
-}
-
-function _entityspice_validate_safe_string($value) {
 }
 
 function _entityspice_v_boolean($value) {
+  if (is_string($value)) {
+    $value = trim(strtolower($value));
+  }
   $yes = ['y', 'yes', 't', 'true', '1', 1, TRUE];
   $no = ['n', 'no', 'f', 'false', '0', 0, FALSE];
   if (in_array($value, $yes, TRUE)) {
@@ -729,7 +459,7 @@ function entityspice_drush_help($section) {
  * Implements hook_drush_command().
  */
 function entityspice_drush_command() {
-  $items['entityspice - cook'] = [
+  $items['entityspice-cook'] = [
     'aliases' => ['cook'],
     'callback' => '_entityspice_drush_pre_ekran',
     'description' => 'Create a module containing an entity(cook an entity type).',
@@ -738,11 +468,9 @@ function entityspice_drush_command() {
     'examples' => [],
     'bootstrap' => DRUSH_BOOTSTRAP_DRUPAL_FULL,
   ];
-  $dummy = new EntitySpiceConfig('dummy');
-  foreach ($dummy->overridable() as $name => $token) {
-    if ($name !== 'machine_name') {
-      $items['entityspice - cook']['options'][$name] = $token[0];
-    }
+  $dummy = new ESConfig('dummy');
+  foreach ($dummy->names() as $name) {
+    $items['entityspice-cook']['options'][$name] = $dummy->{$name}->desc;
   }
   return $items;
 }
@@ -771,11 +499,11 @@ function _entityspice_drush_presume($msg) {
   else {
     $stdin = fopen("php://stdin", "r");
     while ($line = fgets($stdin)) {
-      $line = strtolower(trim($line));
-      if (empty($line) || $line === 'y' || $line === 1 || $line[0] === 't' || $line === '1') {
+      $answer = _entityspice_v_boolean($line);
+      if (empty($line) || $line === "\n" || $answer === TRUE) {
         return TRUE;
       }
-      if ($line === 'n' || $line === 0 || $line[0] === 'f' || $line === '0') {
+      if ($answer === FALSE) {
         return FALSE;
       }
       drush_print_prompt($msg . " (Y/n): ", 0);
@@ -793,7 +521,7 @@ function _entityspice_drush_presume($msg) {
  * @throws \Exception
  */
 function _entityspice_drush_pre_ekran($machine_name = NULL) {
-  if ($err = _entityspice_validate_machine_name($machine_name)) {
+  if ($err = ESToken::machine_name('machine_name', $machine_name)->error) {
     drush_set_error($err);
     return FALSE;
   }
@@ -804,62 +532,58 @@ function _entityspice_drush_pre_ekran($machine_name = NULL) {
 
   // ================================================== Handle drush cli options
   $already = [];
-  $cfg = new EntitySpiceConfig($machine_name);
-  foreach ($cfg->overridable() as $name) {
-    // Machine name is already set by a mandatory argument.
+  $cfg = new ESConfig($machine_name);
+  foreach ($cfg->names() as $name) {
     $arg = drush_get_option($name, NULL);
     if ($arg === NULL) {
       continue;
     }
-    if ($err = $cfg->validate($name, $arg)) {
-      drush_set_error("bad value for [$name] : [$arg] : [err msg if any: $err]");
+    $already[] = $name;
+    if ($err = $cfg->{$name}->set($arg)->error) {
+      drush_set_error($err);
       return FALSE;
-    }
-    else {
-      $cfg->override($name, $arg);
-      $already[] = $name;
     }
   }
 
   // ======================================================= Handle drush prompt
   if (!_entityspice_drush_presume('do you want to use default options ? ')) {
     drush_log('Enter "?" to see each arguments help, ' .
-      'leave empty for default value . ' . "\n", 'ok');
-    foreach ($cfg->overridable() as $token) {
-      if (in_array($token, $already)) {
+      "leave empty for default value\n", 'ok');
+    foreach ($cfg->names() as $name) {
+      if (in_array($name, $already, TRUE)) {
         continue;
       }
-      $desc = $cfg->description($token);
+      $desc = $cfg->{$name}->desc;
+      $def = $cfg->{$name}->desc;
       while (TRUE) {
-        $value = drush_prompt($token . ' (? for help)
-            ',
-          $desc[1],
-          TRUE);
+        $value = drush_prompt($name . ' (? for help) ', $def, TRUE);
         if ($value === ' ? ') {
-          drush_log($token['description'] . "\n", 'ok');
+          drush_log($desc . "\n", 'ok');
           continue;
         }
-        $value = _entityspice_token_post_process($token['validation_policy'], $value);
-        if ($err = $cfg->validate($token, $value)) {
-          drush_log(_entityspice_error_msg($err), 'error');
+        if ($err = $cfg->{$name}->set($value)->error) {
+          drush_log($err, 'error');
         }
         else {
-          $cfg->override($token, $cfg->process($token, $value));
           break;
         }
       };
     }
   }
 
+  foreach ($cfg->names() as $name) {
+    drush_log($name . ': ' . $cfg->{$name}->value, 'ok');
+  }
+
   // ===================================================================== EKRAN
-  $dest = _entityspice_pm_download_destination('module') . ' / ' . $machine_name;
+  $dest = _entityspice_pm_download_destination('module') . '/' . $machine_name;
   if (is_dir($dest)) {
     drush_set_error("destination already exists: $dest, installing into an existing" .
       ' destination is dangerous and not supported');
     return FALSE;
   }
 
-  $tmp = drush_tempdir() . ' / ' . $machine_name;
+  $tmp = drush_tempdir() . '/' . $machine_name;
   if (!drush_mkdir($tmp)) {
     drush_log('could not mkdir tmp directory: ' . $tmp);
     return FALSE;
@@ -879,49 +603,6 @@ function _entityspice_drush_pre_ekran($machine_name = NULL) {
 }
 
 // _______________________________________________________________________ MAIN
-
-/**
- * Before calling:
- *  - ensure valid machine name.
- *  - ensure no module with that machine name exist.
- *  - ensure all token values are provided.
- *  - ensure all tokens have valid values.
- */
-function _entityspice_render(EntitySpiceConfig $a) {
-  $files = [];
-  foreach ([
-             'access . inc',
-             'admin . inc',
-             'bundle .class.inc',
-             'class.inc',
-             'dev . inc',
-             'display . inc',
-             'entity . inc',
-             'info',
-             'inline_entity_form . inc',
-             'install',
-             'menu . inc',
-             'module',
-           ] as $f) {
-    if ($f === 'bundle .class.inc' && !$a->hasBundle()) {
-      continue;
-    }
-    if ($f === 'inline_entity_form . inc' && !$a->hasInlineEntityFormSupport()) {
-      continue;
-    }
-    if ($f === 'dev . inc' && !$a->hasDevelSupport()) {
-      continue;
-    }
-
-    ob_start();
-    require "template/PLACEHOLDER.$f.tpl";
-    $files[$a->machineName() . ' . ' . $f] = ob_get_contents();
-    ob_end_clean();
-  }
-  return $files;
-}
-
-// -----------
 
 /**
  * Stolen from drush pm-download, to find where to put generated module in.
@@ -1005,7 +686,7 @@ function _entityspice_pm_download_destination($type) {
   return $destination;
 }
 
-function _entityspice_ekran($target_dir, EntitySpiceConfig $tokens) {
+function _entityspice_ekran($target_dir, ESConfig $tokens) {
   if (defined('DRUSH_BOOTSTRAP_DRUPAL')) {
     if (!drush_op('chdir', $target_dir)) {
       return 'could not chdir into target: ' . $target_dir;
@@ -1035,4 +716,45 @@ function _entityspice_ekran($target_dir, EntitySpiceConfig $tokens) {
     }
     return '';
   }
+}
+
+/**
+ * Before calling:
+ *  - ensure valid machine name.
+ *  - ensure no module with that machine name exist.
+ *  - ensure all token values are provided.
+ *  - ensure all tokens have valid values.
+ */
+function _entityspice_render(ESConfig $a) {
+  $files = [];
+  foreach ([
+             'access.inc',
+             'admin.inc',
+             'bundle.class.inc',
+             'class.inc',
+             'dev.inc',
+             'display.inc',
+             'entity.inc',
+             'info',
+             'inline_entity_form.inc',
+             'install',
+             'menu.inc',
+             'module',
+           ] as $f) {
+    if ($f === 'bundle.class.inc' && !$a->has_bundle->value) {
+      continue;
+    }
+    if ($f === 'inline_entity_form.inc' && !$a->has_inline_entity_form_support->value) {
+      continue;
+    }
+    if ($f === 'dev.inc' && !$a->has_devel_support->value) {
+      continue;
+    }
+
+    ob_start();
+    require "template/PLACEHOLDER.$f.tpl";
+    $files[$a->m . '.' . $f] = ob_get_contents();
+    ob_end_clean();
+  }
+  return $files;
 }

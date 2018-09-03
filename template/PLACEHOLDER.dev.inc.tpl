@@ -1,7 +1,7 @@
-<?php print $a->php(); ?>
+<?php print $a->php->value; ?>
 
-function <?php echo $a->sMachineName(); ?>_devel_load_object($object, $name = NULL) {
-  $machine_name = '<?php echo $a->machineName(); ?>';
+function <?php echo $a->s; ?>_devel_load_object($object, $name = NULL) {
+  $machine_name = '<?php echo $a->m; ?>';
 
   if (!module_exists('devel')) {
     return drupal_not_found();
@@ -10,7 +10,7 @@ function <?php echo $a->sMachineName(); ?>_devel_load_object($object, $name = NU
   module_load_include('inc', 'devel', 'devel.pages');
 
   if(!is_object($entity)) {
-    $entity = <?php echo $a->sMachineName(); ?>_load($entity);
+    $entity = <?php echo $a->s; ?>_load($entity);
   }
   if($entity === NULL) {
     return drupal_not_found();
@@ -28,8 +28,8 @@ function <?php echo $a->sMachineName(); ?>_devel_load_object($object, $name = NU
  *
  * @return mixed devel result
  */
-function <?php echo $a->sMachineName(); ?>_devel_render_object($etype, $object, $name = NULL) {
-  $machine_name = '<?php echo $a->machineName(); ?>';
+function <?php echo $a->s; ?>_devel_render_object($etype, $object, $name = NULL) {
+  $machine_name = '<?php echo $a->m; ?>';
 
   if (!module_exists('devel')) {
     return drupal_not_found();
@@ -38,7 +38,7 @@ function <?php echo $a->sMachineName(); ?>_devel_render_object($etype, $object, 
   module_load_include('inc', 'devel', 'devel.pages');
 
   if(!is_object($entity)) {
-    $entity = <?php echo $a->sMachineName(); ?>_load($entity);
+    $entity = <?php echo $a->s; ?>_load($entity);
   }
   if($entity === NULL) {
     return drupal_not_found();

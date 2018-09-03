@@ -50,3 +50,5 @@ remove these psudo fields from PLACEHOLDERS if entity does not actually have 'em
   all places _es_get_entity
 
   on submit redirect?
+
+  say you ave to implemetn is slef logic yourslef
