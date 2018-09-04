@@ -15,6 +15,8 @@
  */
 class <?php echo $a->uc; ?>Bundle extends Entity {
 
+  const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
+
   /**
    * String: Machine name of bundle entity.
    */
@@ -33,7 +35,7 @@ class <?php echo $a->uc; ?>Bundle extends Entity {
 <?php endif; ?>
 
   public function __construct(array $values = []) {
-    parent::__construct($values, '<?php print $a->bundle_machine_name->value; ?>');
+    parent::__construct($values, self::_entity_type);
   }
 }
 
@@ -42,6 +44,8 @@ class <?php echo $a->uc; ?>Bundle extends Entity {
  * operations. The load method is inherited from the default controller.
  */
 class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
+
+  const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
 
   /**
    * @see parent
@@ -59,7 +63,7 @@ class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
   }
 
   public function __construct() {
-    parent::__construct('<?php print $a->bundle_machine_name->value; ?>');
+    parent::__construct(self::_entity_type);
   }
 }
 
@@ -68,8 +72,10 @@ class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
  * Entity Bundle UI controller.
  */
 class <?php print $a->uc; ?>BundleUIController extends EntityDefaultUIController {
+  const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
+
   public function __construct($entity_info) {
-    parent::__construct('<?php print $a->bundle_machine_name->value; ?>', $entity_info);
+    parent::__construct(self::_entity_type $entity_info);
   }
 }
 
@@ -157,9 +163,11 @@ function <?php echo $a->s; ?>_get_bundles_options_list($check_plain = TRUE) {
 * Check if entities of this bundle exist.
 */
 function <?php echo $a->s; ?>_bundle_has_entity($name) {
+  $machine_name = '<?php echo $a->m ?>';
   $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', '<?php echo $a->m; ?>');
+  $query->entityCondition('entity_type', $machine_name);
+  // TODO
   $query->entityCondition('bundle', $name); // IS THIS RIGHT?
   return $query->count()->execute() > 0;
 }

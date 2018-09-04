@@ -94,20 +94,6 @@ function <?php echo $a->m; ?>_field_extra_fields() {
 }
 
 /**
- */
-function <?php echo $a->m; ?>_access($op, $entity = NULL, $account = NULL) {
-  $machine_name = '<?php echo $a->m; ?>';
-  return _entityspice_entity_access($machine_name, $op, $entity, $account);
-}
-
-/**
- */
-function <?php echo $a->m; ?>_entity_info_alter(&$entity_info) {
-  $machine_name = '<?php echo $a->m; ?>';
-  return _entityspice_entity_info_alter($machine_name, $entity_info);
-}
-
-/**
   TODO bundle?
  */
 function <?php echo $a->m; ?>_add_page($bundle) {

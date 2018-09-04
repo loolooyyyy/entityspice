@@ -210,21 +210,21 @@ class ESConfig {
 
 class ESToken {
 
-  const NON_OVERRIDABLE = 0;
+  const NON_OVERRIDABLE = 'NON_OVERRIDABLE';
 
-  const UNKNOWN = 1;
+  const UNKNOWN = 'UNKNOWN';
 
-  const MACHINE_NAME = 2;
+  const MACHINE_NAME = 'MACHINE_NAME';
 
-  const LABEL = 3;
+  const LABEL = 'LABEL';
 
-  const URI = 4;
+  const URI = 'URI';
 
-  const BOOL = 5;
+  const BOOL = 'BOOL';
 
-  const FLAT_STRING_ARRAY = 6;
+  const FLAT_STRING_ARRAY = 'FLAT_STRING_ARRAY';
 
-  const FUNC = 7;
+  const FUNC = 'FUNC';
 
 
   private $type;
@@ -252,7 +252,7 @@ class ESToken {
   }
 
   function get() {
-    return $this->type === ESToken::FLAT_STRING_ARRAY ? json_decode($this->value) : $this->value;
+    return $this->type === ESToken::FLAT_STRING_ARRAY ? json_encode($this->value) : $this->value;
   }
 
   function __get($name) {
@@ -615,9 +615,9 @@ function _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitep
   $destination = $type . 's';
   // Prefer /contrib if it exists.
   if ($sitepath) {
-    $destination = $sitepath . ' / ' . $destination;
+    $destination = $sitepath . '/' . $destination;
   }
-  $contrib = $destination . ' / contrib';
+  $contrib = $destination . '/contrib';
   if (is_dir($contrib)) {
     $destination = $contrib;
   }
@@ -641,8 +641,8 @@ function _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitep
 function _entityspice_pm_download_destination($type) {
   $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
   $site_root = drush_get_context('DRUSH_DRUPAL_SITE_ROOT');
-  $full_site_root = (empty($drupal_root) || empty($site_root)) ? '' : $drupal_root . ' / ' . $site_root;
-  $sitewide = empty($drupal_root) ? '' : $drupal_root . ' / ' . drush_drupal_sitewide_directory();
+  $full_site_root = (empty($drupal_root) || empty($site_root)) ? '' : $drupal_root . '/' . $site_root;
+  $sitewide = empty($drupal_root) ? '' : $drupal_root . '/' . drush_drupal_sitewide_directory();
 
   $in_site_directory = FALSE;
   // Check if we are running within the site directory.

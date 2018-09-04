@@ -5,6 +5,7 @@
 */
 function <?php echo $a->m; ?>_menu() {
   $machine_name = '<?php echo $a->m; ?>';
+  $safe_name= '<?php echo $a->s; ?>'
   $s_name = '<?php echo $a->s; ?>';
   $human_name = '<?php echo $a->human_name->value; ?>';
   $root = '<?php echo $a->parent_userland_path->value; ?>';
@@ -80,7 +81,7 @@ function <?php echo $a->m; ?>_menu() {
     'title callback' => $s_name . '_menu_title',
     'title arguments' => ['edit', $arg_no],
     'page callback' => 'drupal_get_form',
-    'page arguments' => ['<?php echo $a->s ?>', $arg_no],
+    'page arguments' => [$safe_name, $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
     'access callback' => $access_cbk,
@@ -90,7 +91,7 @@ function <?php echo $a->m; ?>_menu() {
     'title callback' => $s_name . '_menu_title',
     'title arguments' => ['delete', $arg_no],
     'page callback' => 'drupal_get_form',
-    'page arguments' => ['<?php echo $a->s; ?>', $arg_no],
+    'page arguments' => [$safe_name, $arg_no],
     'type' => MENU_LOCAL_TASK,
     'weight' => 5,
     'access callback' => $access_cbk,
@@ -213,11 +214,12 @@ function  <?php echo $a->s; ?>_entity_page() {
 function <?php echo $a->s; ?>_add_page(<?php if($a->has_bundle->value): ?>$bundle<?php endif; ?>) {
   $s_name = '<?php echo $a->s; ?>';
   $module = '<?php echo $a->m; ?>';
+  $add_form = '<?php echo $info['add form']; ?>';
 
   $form_callback = ;
 
   module_load_include($module, 'forms.inc');
 
   $entity = <?php echo $a->s; ?>_entity_create(<?php if($a->has_bundle->value): ?>['bundle' => $bundle]<?php endif; ?>);
-  return drupal_get_form("<?php echo $info['add form']; ?>", $entity);
+  return drupal_get_form($add_form, $entity);
 }

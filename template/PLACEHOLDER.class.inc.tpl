@@ -9,7 +9,7 @@
  * The mighty entity class, for the entity itself.
  */
 class <?php echo $a->uc; ?> extends Entity {
-  const _entity_type = <?php print $a->m; ?>;
+  const _entity_type = '<?php print $a->m; ?>';
 
 <?php if($a->has_bundle->value): ?>
   public $<?php print $a->bundle_key_name->value; ?> = NULL;
@@ -22,7 +22,7 @@ class <?php echo $a->uc; ?> extends Entity {
   }
 
   final protected function defaultUri() {
-    $base = "<?php echo $a->parent_userland_path->value; ?>";
+    $base = '<?php echo $a->parent_userland_path->value; ?>';
     return ['path' => $base . '/' . $this->identifier()];
   }
 

@@ -1,4 +1,4 @@
-<?php print $a->php->value; ?>
+<?php print $a->php ?>
 
 require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.entity.inc';
 require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.menu.inc';
