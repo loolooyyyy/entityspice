@@ -1,4 +1,4 @@
-<?php print $a->php->value; ?>
+<?php print $a->php; ?>
 
 /**
  * Implements hook_theme().

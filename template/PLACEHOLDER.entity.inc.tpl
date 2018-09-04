@@ -1,4 +1,4 @@
-<?php print $a->php->value; ?>
+<?php print $a->php; ?>
 
 /**
 * Loads an entity by ID.
@@ -109,18 +109,21 @@ function <?php echo $a->s; ?>_entity_name($entity) {
 }
 
 function <?php echo $a->s; ?>_entity_id($entity) {
-  throw new RuntimeException('not supported');
+  $machine_name = '<?php echo $a->m; ?>';
+  return entity_id($machine_name, $entity);
 }
 
 function <?php echo $a->s ?>_uri_callback($entity) {
-  $userland_path = '<?php echo $a->parent_userland_path';
-  $path['path'] = $userland_path . '/' . $entity-><?php echp $a->id_key->value; ?>;
+  $userland_path = '<?php echo $a->parent_userland_path->value ?>';
+  $path['path'] = $userland_path . '/' . $entity-><?php echo $a->id_key->value; ?>;
   return $path;
 }
 
-<?php if($a->has_label_callback->value): ?>
-function <?php echo $a->s ?>_uri_callback($entity, $entity_type) {
-  // TODO if has_title
-  return $entity-><?php echp $a->id_key->value; ?>;
-}
+function <?php echo $a->s ?>_label_callback($entity, $entity_type) {
+<?php if($m->has_label_key->value): ?>
+  $title = $entity-><?php echo $m->label_key_name->value; ?>;
+  return empty($title) ? entity_id($entity_type, $entity) : $title;
+<?php else: ?>
+  return $entity-><?php echo $m->id_key->value; ?>;
 <?php endif; ?>
+}

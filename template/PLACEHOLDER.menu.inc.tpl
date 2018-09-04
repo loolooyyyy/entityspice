@@ -1,11 +1,11 @@
-<?php print $a->php->value; ?>
+<?php print $a->php; ?>
 
 /**
 * Implements hook_menu().
 */
 function <?php echo $a->m; ?>_menu() {
   $machine_name = '<?php echo $a->m; ?>';
-  $safe_name= '<?php echo $a->s; ?>'
+  $safe_name= '<?php echo $a->s; ?>';
   $s_name = '<?php echo $a->s; ?>';
   $human_name = '<?php echo $a->human_name->value; ?>';
   $root = '<?php echo $a->parent_userland_path->value; ?>';

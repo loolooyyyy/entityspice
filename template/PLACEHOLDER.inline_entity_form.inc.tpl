@@ -1,4 +1,4 @@
-<?php print $a->php->value; ?>
+<?php print $a->php; ?>
 
 class <?php echo $a->uc; ?>InlineEntityFormController extends EntityInlineEntityFormController  {
   const _entity_type = '<?php echo $a->uc; ?>';

@@ -1,4 +1,4 @@
-<?php print $a->php->value; ?>
+<?php print $a->php; ?>
 
 /**
  * @file
@@ -28,7 +28,7 @@ class <?php echo $a->uc; ?> extends Entity {
 
 }
 
-class <?php echo $a->uc; ?>EntityController extends DrupalDefaultEntityController {
+class <?php echo $a->uc; ?>EntityController extends EntityApiController {
   const _entity_type = '<?php print $a->m; ?>';
 
   function __construct() {

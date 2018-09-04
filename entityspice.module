@@ -34,7 +34,7 @@ class ESConfig {
     $tokens['safe'] = ESToken::non_override('safe', $safe ? '_' : '');
     $tokens['machine_name'] = ESToken::non_override('machine_name', $machine_name);
     $tokens['s_machine_name'] = ESToken::non_override(
-      'sMachineName',
+      's_machine_name',
       ($safe ? '_' : '') . $machine_name,
       'namespace-safe machine name');
     $tokens['sane'] = ESToken::non_override(
@@ -66,16 +66,15 @@ class ESConfig {
 
     $tokens['access_controlled_actions'] = ESToken::arr(
       'access_controlled_actions',
-      [
-        'administer',
-        'create',
-        'delete',
-        'view',
-        'archive',
-      ],
+      "[ 'administer', 'create', 'delete', 'view', 'archive', ]",
       'actions on the entity, which are controlled by permission, just like ' .
       'node creation, node view, ...; ONLY PROVIDE THE VERB, such as [view] or' .
       ' [create] or ... (view own is added automatically)');
+    $tokens['view_modes'] = ESToken::map(
+      'view_modes',
+      "['default' => 'Default']",
+      'entity view modes, consult hook_entity_info for more info (machine_name => label map)'
+    );
 
     $tokens['has_devel_support'] = ESToken::bool(
       'has_devel_support',
@@ -87,7 +86,6 @@ class ESConfig {
       'whether if a can_delete_hook is added, so other modules can lock ' .
       'entities of this type and prevent deletion');
 
-    $e_path = str_replace('_', '-', $machine_name);
 
     $tokens['has_bundle'] = ESToken::bool(
       'has_bundle',
@@ -109,10 +107,17 @@ class ESConfig {
       TRUE,
       'whether if bundles are lockable and deletion can be prevented, ' .
       'such as when entities of this bundle still exist');
+    // TODO
     $tokens['bundle_is_entity'] = ESToken::bool(
       'bundle_is_entity',
       TRUE,
       'whether if bundles are entity themselves');
+    $tokens['default_bundles'] = ESToken::map(
+      'default_bundles',
+      '{}',
+      'default bundles, defined in code (machine name => title json map)');
+
+    $e_path = str_replace('_', '-', $machine_name);
 
     // probably should change to parent admin path, but then we need a
     // isOverridden flag to not change it then, which will blow up the whole
@@ -152,20 +157,23 @@ class ESConfig {
       TRUE,
       'refer to hook_entity_info docs');
 
-    $tokens['has_label_callback'] = ESToken::bool(
-      'has_label_callback',
-      TRUE,
-      'consult hook_entity_info about this callback. By default this is TRUE and has_label_key is ignored');
     $tokens['has_label_key'] = ESToken::bool(
       'has_label_key',
       FALSE,
-      'the label property on entity object just like node->title. if ' .
-      'has_label_callback is TRUE, then this is ignored. (which by default is)');
+      'whether if entity object has a label property');
     $tokens['label_key_name'] = ESToken::bool(
       'label_key_name',
       'title',
-      'just like node->title, if applicable (entity support label key)');
+      'the label property on entity object just like node->title, if any');
 
+    $tokens['has_language_key'] = ESToken::bool(
+      'has_language_key',
+      FALSE,
+      'whether if entity object has a language property');
+    $tokens['has_translation'] = ESToken::bool(
+      'has_translation',
+      FALSE,
+      'whether to introduce locale module as translation module or not');
 
     $tokens['parent_admin_path'] = ESToken::uri(
       'parent_admin_path',
@@ -216,6 +224,7 @@ class ESConfig {
   }
 
   function __set($name, $value) {
+    /** @noinspection PhpUndefinedMethodInspection */
     $this->__get($name)->set($value)->validate();
   }
 
@@ -247,6 +256,8 @@ class ESToken {
 
   const FLAT_STRING_ARRAY = 'FLAT_STRING_ARRAY';
 
+  const FLAT_STRING_MAP = 'FLAT_STRING_MAP';
+
   const FUNC = 'FUNC';
 
 
@@ -275,7 +286,15 @@ class ESToken {
   }
 
   function get() {
-    return $this->type === ESToken::FLAT_STRING_ARRAY ? json_encode($this->value) : $this->value;
+    switch ($this->type) {
+      case ESToken::FLAT_STRING_ARRAY:
+        return json_decode($this->value);
+      case ESToken::FLAT_STRING_MAP:
+        return json_decode($this->value, TRUE);
+        break;
+      default:
+        return $this->value;
+    }
   }
 
   function __get($name) {
@@ -400,6 +419,27 @@ class ESToken {
         }
       }
     }
+    elseif ($type === ESToken::FLAT_STRING_MAP) {
+      $err = "MAP::$name -> [$value] must be a valid FLAT json map (simple string' . 
+      ' key (machine-name-like), simple string value), containing only ascii alpha-num.";
+      $json = NULL;
+      try {
+        $json = json_decode($value);
+      } catch (Exception $e) {
+        return $err;
+      }
+      if ($json === NULL) {
+        return $err;
+      }
+      foreach ($json as $index => $item) {
+        if ($err = ESToken::check($index, ESToken::MACHINE_NAME, "$name map key")) {
+          return $err;
+        }
+        if ($err = ESToken::check($item, ESToken::LABEL, "$name map value")) {
+          return $err;
+        }
+      }
+    }
     elseif ($type === ESToken::FUNC) {
       $regex = '/^[a-z][_0-9a-z]*?$/';
       $err = "FUNCTION_NAME::$name -> [$value] must match the regex: $regex";
@@ -445,6 +485,10 @@ class ESToken {
 
   static function arr($name, $value, $desc = NULL) {
     return new ESToken(ESToken::FLAT_STRING_ARRAY, $name, $value, $desc);
+  }
+
+  static function map($name, $value, $desc = NULL) {
+    return new ESToken(ESToken::FLAT_STRING_MAP, $name, $value, $desc);
   }
 
   static function func($name, $value, $desc = NULL) {

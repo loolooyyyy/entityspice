@@ -15,25 +15,19 @@ abstract class EntitySpiceEntity extends Entity {
    */
   final public function buildContent($view_mode = 'full', $langcode = NULL, array $content = []) {
     // TODO all custom fields.
-    if (_entityspice_get_info($this->entityType)->hasTitle()) {
-      $content['title'] = [
-        '#theme' => 'entityspice_entity_property_field',
-        // TODO
-        '#label' => t('Title'),
-        // TODO
-        '#items' => ['#markup' => check_plain($this->wrapper()->title->value())],
-        // TODO
-        '#classes' => 'field field-label-inline clearfix',
-      ];
-    }
+    $content['title'] = [
+      '#theme' => 'entityspice_entity_property_field',
+      // TODO
+      '#label' => t('Title'),
+      // TODO
+      '#items' => ['#markup' => check_plain($this->wrapper()->title->value())],
+      // TODO
+      '#classes' => 'field field-label-inline clearfix',
+    ];
 
     return entity_get_controller($this->entityType)
       ->buildContent($this, $view_mode, $langcode, $content);
   }
-
-  //  protected function defaultLabel() {
-  //    return $this->wrapper()->title->value();
-  //  }
 
 }
 
@@ -154,6 +148,9 @@ abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityF
 
 }
 
+abstract class Shit extends  EntityAPIController {
+
+}
 
 // ____________________________________________________________________________
 

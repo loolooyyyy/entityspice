@@ -24,8 +24,10 @@ function <?php echo $a->s; ?>_entity_access_is_self($entity, $account) {
 <?php endif; ?>
  */
 function <?php echo $a->s; ?>_entity_access($op,<?php if($a->has_bundle->value): ?> $bundle = NULL,<?php endif; ?> $entity = NULL, $user = NULL) {
-  $access_controlled_actions = NULL;
-  $machine_name = NULL;
+  $access_controlled_actions = [<?php foreach($a->access_controlled_actions->value as $op): ?>
+    <?php echo $op; ?>,
+  <?php endforeach; ?>];
+  $machine_name = <?php echo $a->m ?>;
 
   if (!in_array($op, $access_controlled_actions)) {
     return FALSE;

@@ -54,7 +54,7 @@ class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
     <?php if($a->bundle_has_lock->value): ?>
     foreach($ids as $id) {
       if(<?php echo $a->s; ?>_bundle_has_entity($id)) {
-        throw new RuntimeException('entities of this type exist, thus it is locked: [ ' . $id . ']');
+        throw new RuntimeException('entities of this type exist, it is locked and can not be deleted: [ ' . $id . ']');
       }
     }
     <?php endif; ?>
@@ -75,7 +75,7 @@ class <?php print $a->uc; ?>BundleUIController extends EntityDefaultUIController
   const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
 
   public function __construct($entity_info) {
-    parent::__construct(self::_entity_type $entity_info);
+    parent::__construct(self::_entity_type, $entity_info);
   }
 }
 
