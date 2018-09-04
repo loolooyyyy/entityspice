@@ -42,7 +42,6 @@ class ESConfig {
       ($safe ? '_' : '') . $machine_name,
       'namespace-safe machine name');
 
-
     $tokens['human_name'] = ESToken::label(
       'human_name',
       ucwords(str_replace('_', ' ', $machine_name)),
@@ -143,6 +142,30 @@ class ESConfig {
       'has_revision_log',
       TRUE,
       'whether if the entity type has revision logs just like node');
+
+    $tokens['has_static_cache'] = ESToken::bool(
+      'has_static_cache',
+      TRUE,
+      'refer to hook_entity_info docs');
+    $tokens['has_field_cache'] = ESToken::bool(
+      'has_field_cache',
+      TRUE,
+      'refer to hook_entity_info docs');
+
+    $tokens['has_label_callback'] = ESToken::bool(
+      'has_label_callback',
+      TRUE,
+      'consult hook_entity_info about this callback. By default this is TRUE and has_label_key is ignored');
+    $tokens['has_label_key'] = ESToken::bool(
+      'has_label_key',
+      FALSE,
+      'the label property on entity object just like node->title. if ' .
+      'has_label_callback is TRUE, then this is ignored. (which by default is)');
+    $tokens['label_key_name'] = ESToken::bool(
+      'label_key_name',
+      'title',
+      'just like node->title, if applicable (entity support label key)');
+
 
     $tokens['parent_admin_path'] = ESToken::uri(
       'parent_admin_path',
@@ -443,6 +466,15 @@ function _entityspice_v_boolean($value) {
     return FALSE;
   }
   return NULL;
+}
+
+function _entityspice_calculate_bundle_argument($path) {
+  foreach (explode('/', $path) as $index => $part) {
+    if ($part[0] === '%') {
+      return $index;
+    }
+  }
+  throw new RuntimeException('could not determine bundle argument: ' . $path);
 }
 
 

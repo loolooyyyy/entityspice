@@ -103,14 +103,6 @@ function <?php echo $a->m; ?>_add_page($bundle) {
 
 // ____________________________________________________________________________
 
-/**
- * Implements hook_entity_info().
- */
-function <?php echo $a->m; ?>_entity_info() {
-  $machine_name = '<?php print $a->m; ?>';
-  return _entityspice_entity_info($machine_name);
-}
-
 function <?php echo $a->s; ?>_entity_name($entity) {
   // WARN always return check plained.
   return '?';
@@ -119,3 +111,16 @@ function <?php echo $a->s; ?>_entity_name($entity) {
 function <?php echo $a->s; ?>_entity_id($entity) {
   throw new RuntimeException('not supported');
 }
+
+function <?php echo $a->s ?>_uri_callback($entity) {
+  $userland_path = '<?php echo $a->parent_userland_path';
+  $path['path'] = $userland_path . '/' . $entity-><?php echp $a->id_key->value; ?>;
+  return $path;
+}
+
+<?php if($a->has_label_callback->value): ?>
+function <?php echo $a->s ?>_uri_callback($entity, $entity_type) {
+  // TODO if has_title
+  return $entity-><?php echp $a->id_key->value; ?>;
+}
+<?php endif; ?>

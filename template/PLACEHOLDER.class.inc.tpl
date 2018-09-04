@@ -18,7 +18,7 @@ class <?php echo $a->uc; ?> extends Entity {
   // TODO custom prop
 
   public function __construct(array $values = []) {
-    parent::__construct($values, $this::_entity_type);
+    parent::__construct($values, self::_entity_type);
   }
 
   final protected function defaultUri() {
@@ -28,17 +28,25 @@ class <?php echo $a->uc; ?> extends Entity {
 
 }
 
+class <?php echo $a->uc; ?>EntityController extends DrupalDefaultEntityController {
+  const _entity_type = '<?php print $a->m; ?>';
+
+  function __construct() {
+    parent::__construct(self::_entity_type);
+  }
+}
+
 // ___________________________________________________________________________
 
 /**
  * The controller class for entities contains methods for the entity CRUD
  * operations.
  */
-class <?php echo $a->uc; ?>EntityController extends EntityDefaultMetadataController {
+class <?php echo $a->uc; ?>EntityMetaDataController extends EntityDefaultMetadataController {
   const _entity_type = '<?php print $a->m; ?>';
 
   public function __construct() {
-    parent::__construct($this::_entity_type);
+    parent::__construct(self::_entity_type);
   }
 
 <?php if($a->has_can_delete_hook->value): ?>
@@ -69,6 +77,18 @@ class <?php echo $a->uc; ?>EntityController extends EntityDefaultMetadataControl
   }
 <?php endif; ?>
 
+  /**
+  * Overrides entityPropertyInfo().
+  */
+  public function entityPropertyInfo() {
+    $info = parent::entityPropertyInfo();
+    $properties = &$info[$this->type]['properties'];
+
+    // @TODO ADD user properties.
+
+    return $info;
+  }
+
 }
 
 // ___________________________________________________________________________
@@ -76,11 +96,11 @@ class <?php echo $a->uc; ?>EntityController extends EntityDefaultMetadataControl
 /**
  * Entity Views Controller class.
  */
-class <?php echo $a->uc; ?>ViewsController extends EntityDefaultViewsController {
+class <?php echo $a->uc; ?>EntityViewsController extends EntityDefaultViewsController {
   const _entity_type = '<?php print $a->m; ?>';
 
   public function __construct() {
-    parent::__construct($this::_entity_type);
+    parent::__construct(self::_entity_type);
   }
 
   /**
@@ -92,30 +112,5 @@ class <?php echo $a->uc; ?>ViewsController extends EntityDefaultViewsController 
     // @TODO ADD user views data
 
     return $data;
-  }
-}
-
-// ___________________________________________________________________________
-
-/**
- * Controls metadata for entities.
- */
-class <?php echo $a->uc ?>MetadataController extends EntityDefaultMetadataController {
-  const _entity_type = '<?php print $a->m ?>';
-
-  public function __construct() {
-    parent::__construct($this::_entity_type);
-  }
-
-  /**
-   * Overrides entityPropertyInfo().
-   */
-  public function entityPropertyInfo() {
-    $info = parent::entityPropertyInfo();
-    $properties = &$info[$this->type]['properties'];
-
-    // @TODO ADD user properties.
-
-    return $info;
   }
 }
