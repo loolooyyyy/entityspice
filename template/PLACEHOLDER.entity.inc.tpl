@@ -1,4 +1,4 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 /**
 * Loads an entity by ID.
@@ -114,16 +114,16 @@ function <?php echo $a->s; ?>_entity_id($entity) {
 }
 
 function <?php echo $a->s ?>_uri_callback($entity) {
-  $userland_path = '<?php echo $a->parent_userland_path->value ?>';
-  $path['path'] = $userland_path . '/' . $entity-><?php echo $a->id_key->value; ?>;
+  $userland_path = '<?php echo $a->parent_userland_path ?>';
+  $path['path'] = $userland_path . '/' . $entity-><?php echo $a->id_key; ?>;
   return $path;
 }
 
 function <?php echo $a->s ?>_label_callback($entity, $entity_type) {
 <?php if($m->has_label_key->value): ?>
-  $title = $entity-><?php echo $m->label_key_name->value; ?>;
+  $title = $entity-><?php echo $m->label_key_name; ?>;
   return empty($title) ? entity_id($entity_type, $entity) : $title;
 <?php else: ?>
-  return $entity-><?php echo $m->id_key->value; ?>;
+  return $entity-><?php echo $m->id_key; ?>;
 <?php endif; ?>
 }

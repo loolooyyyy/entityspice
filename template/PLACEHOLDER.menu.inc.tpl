@@ -1,4 +1,4 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 /**
 * Implements hook_menu().
@@ -7,8 +7,8 @@ function <?php echo $a->m; ?>_menu() {
   $machine_name = '<?php echo $a->m; ?>';
   $safe_name= '<?php echo $a->s; ?>';
   $s_name = '<?php echo $a->s; ?>';
-  $human_name = '<?php echo $a->human_name->value; ?>';
-  $root = '<?php echo $a->parent_userland_path->value; ?>';
+  $human_name = '<?php echo $a->human_name; ?>';
+  $root = '<?php echo $a->parent_userland_path; ?>';
   $einfo = entity_get_info($machine_name);
 
   if(strlen($root) < 1) {

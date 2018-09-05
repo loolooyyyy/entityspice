@@ -1,4 +1,4 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 /**
  * Implements hook_theme().
@@ -7,11 +7,11 @@
  *   - Defines theme callback for default page.
  *   - Defines theme callback for property field of entity (pseudo fields).
  */
-function <?php print $a->m; ?>_theme() {
+function <?php echo $a->m; ?>_theme() {
   $info = [
-    '<?php print $a->m; ?>_entity_add_list' => ['content', 'entity_type'],
-    '<?php print $a->m; ?>_entity_list' => ['header', 'rows', 'entity_type', 'entities'],
-    '<?php print $a->m; ?>_default_page' => ['entity_types'],
+    '<?php echo $a->m; ?>_entity_add_list' => ['content', 'entity_type'],
+    '<?php echo $a->m; ?>_entity_list' => ['header', 'rows', 'entity_type', 'entities'],
+    '<?php echo $a->m; ?>_default_page' => ['entity_types'],
   ];
 
   $theme = [];
@@ -21,7 +21,7 @@ function <?php print $a->m; ?>_theme() {
     }
   }
 
-  $theme['<?php print $a->m; ?>_entity_property_field'] = [
+  $theme['<?php echo $a->m; ?>_entity_property_field'] = [
     'variables' => [
       'label_hidden' => FALSE,
       'title_attributes' => NULL,
@@ -50,7 +50,7 @@ function <?php print $a->m; ?>_theme() {
 function theme_<?php echo $a->m; ?>_entity_add_list($variables) {
   $content = $variables['content'];
   $etype = $variables['entity_type'];
-  $bundles_page = '<?php print $a->parent_admin_path->value; ?>';
+  $bundles_page = '<?php echo $a->parent_admin_path; ?>';
 
   if ($content) {
     $output = '<dl class="node-type-list">';

@@ -1,8 +1,8 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 /**
  * @file
- * <?php print $a->m; ?>'s bundle classes.
+ * <?php echo $a->m; ?>'s bundle classes.
  *
 // TODO custom fields.
 // TODO deny delete.
@@ -15,7 +15,7 @@
  */
 class <?php echo $a->uc; ?>Bundle extends Entity {
 
-  const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
+  const _entity_type = '<?php echo $a->bundle_machine_name; ?>';
 
   /**
    * String: Machine name of bundle entity.
@@ -43,9 +43,9 @@ class <?php echo $a->uc; ?>Bundle extends Entity {
  * The controller class for entity bundles contains methods for CRUD
  * operations. The load method is inherited from the default controller.
  */
-class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
+class <?php echo $a->uc; ?>Controller extends EntityAPIControllerExportable {
 
-  const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
+  const _entity_type = '<?php echo $a->bundle_machine_name; ?>';
 
   /**
    * @see parent
@@ -71,13 +71,14 @@ class <?php print $a->uc; ?>Controller extends EntityAPIControllerExportable {
 /**
  * Entity Bundle UI controller.
  */
-class <?php print $a->uc; ?>BundleUIController extends EntityDefaultUIController {
-  const _entity_type = '<?php print $a->bundle_machine_name->value; ?>';
+class <?php echo $a->uc; ?>BundleUIController extends EntityBundleableUIController {
+  const _entity_type = '<?php echo $a->bundle_machine_name; ?>';
 
   public function __construct($entity_info) {
     parent::__construct(self::_entity_type, $entity_info);
   }
 }
+
 
 /**
 * Create a new bundle object - DOES NOT SAVE IT.
@@ -88,7 +89,7 @@ class <?php print $a->uc; ?>BundleUIController extends EntityDefaultUIController
 * @return \Entity created bundle.
 */
 function <?php echo $a->s ?>_bundle_create(array $values = []) {
-  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
   return entity_get_controller($bundle_machine_name)->create($values);
 }
 
@@ -101,7 +102,7 @@ function <?php echo $a->s ?>_bundle_create(array $values = []) {
 *   An bundle entity array or FALSE if $name does not exist.
 */
 function <?php echo $a->s ?>_bundle_load($name) {
-  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
 
   $bundles = entity_load_multiple_by_name($bundle_machine_name, [$name]);
   foreach ($bundles as $bundle) {
@@ -135,7 +136,7 @@ function <?php echo $a->s; ?>_bundle_save($bundle) {
  * Gets an array of all bundles, keyed by the name.
  */
 function <?php echo $a->s; ?>_get_bundles() {
-  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
   return entity_load_multiple_by_name($bundle_machine_name);
 }
 
@@ -164,7 +165,7 @@ function <?php echo $a->s; ?>_get_bundles_options_list($check_plain = TRUE) {
 */
 function <?php echo $a->s; ?>_bundle_has_entity($name) {
   $machine_name = '<?php echo $a->m ?>';
-  $bundle_machine_name = '<?php echo $a->bundle_machine_name->value; ?>';
+  $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', $machine_name);
   // TODO

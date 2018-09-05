@@ -1,18 +1,18 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 /**
  * @file
- * <?php print $a->m; ?> entity classes.
+ * <?php echo $a->m; ?> entity classes.
  */
 
 /**
  * The mighty entity class, for the entity itself.
  */
 class <?php echo $a->uc; ?> extends Entity {
-  const _entity_type = '<?php print $a->m; ?>';
+  const _entity_type = '<?php echo $a->m; ?>';
 
 <?php if($a->has_bundle->value): ?>
-  public $<?php print $a->bundle_key_name->value; ?> = NULL;
+  public $<?php echo $a->bundle_key_name; ?> = NULL;
 <?php endif; ?>
 
   // TODO custom prop
@@ -22,14 +22,14 @@ class <?php echo $a->uc; ?> extends Entity {
   }
 
   final protected function defaultUri() {
-    $base = '<?php echo $a->parent_userland_path->value; ?>';
+    $base = '<?php echo $a->parent_userland_path; ?>';
     return ['path' => $base . '/' . $this->identifier()];
   }
 
 }
 
 class <?php echo $a->uc; ?>EntityController extends EntityApiController {
-  const _entity_type = '<?php print $a->m; ?>';
+  const _entity_type = '<?php echo $a->m; ?>';
 
   function __construct() {
     parent::__construct(self::_entity_type);
@@ -43,7 +43,7 @@ class <?php echo $a->uc; ?>EntityController extends EntityApiController {
  * operations.
  */
 class <?php echo $a->uc; ?>EntityMetaDataController extends EntityDefaultMetadataController {
-  const _entity_type = '<?php print $a->m; ?>';
+  const _entity_type = '<?php echo $a->m; ?>';
 
   public function __construct() {
     parent::__construct(self::_entity_type);
@@ -97,7 +97,7 @@ class <?php echo $a->uc; ?>EntityMetaDataController extends EntityDefaultMetadat
  * Entity Views Controller class.
  */
 class <?php echo $a->uc; ?>EntityViewsController extends EntityDefaultViewsController {
-  const _entity_type = '<?php print $a->m; ?>';
+  const _entity_type = '<?php echo $a->m; ?>';
 
   public function __construct() {
     parent::__construct(self::_entity_type);

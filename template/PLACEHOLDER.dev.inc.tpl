@@ -1,4 +1,4 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 function <?php echo $a->s; ?>_devel_load_object($object, $name = NULL) {
   $machine_name = '<?php echo $a->m; ?>';

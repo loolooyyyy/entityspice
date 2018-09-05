@@ -1,5 +1,30 @@
 <?php
 
+function _entityspice_v_boolean($value) {
+  if (is_string($value)) {
+    $value = trim(strtolower($value));
+  }
+  $yes = ['y', 'yes', 't', 'true', '1', 1, TRUE];
+  $no = ['n', 'no', 'f', 'false', '0', 0, FALSE];
+  if (in_array($value, $yes, TRUE)) {
+    return TRUE;
+  }
+  if (in_array($value, $no, TRUE)) {
+    return FALSE;
+  }
+  return NULL;
+}
+
+function _entityspice_calculate_bundle_argument($path) {
+  foreach (explode('/', $path) as $index => $part) {
+    if ($part[0] === '%') {
+      return $index;
+    }
+  }
+  throw new RuntimeException('could not determine bundle argument: ' . $path);
+}
+
+
 const _ENTITYSPICE_ERR_NO_ERR = 0;
 const _ENTITYSPICE_ERR_MACHINE = 2;
 const _ENTITYSPICE_ERR_INVALID = 4;

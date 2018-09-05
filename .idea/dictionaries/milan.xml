@@ -2,6 +2,7 @@
   <dictionary name="milan">
     <words>
       <w>alphanum</w>
+      <w>bundleable</w>
       <w>chdir</w>
       <w>clbk</w>
       <w>ctype</w>
@@ -19,6 +20,7 @@
       <w>fieldable</w>
       <w>fopen</w>
       <w>fwrite</w>
+      <w>haha</w>
       <w>langcode</w>
       <w>nbsp</w>
       <w>sinfo</w>

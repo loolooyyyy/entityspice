@@ -31,12 +31,7 @@ class ESConfig {
     ESToken::bool('safe', $safe)->validate();
 
     $tokens['php'] = ESToken::non_override('php', '<' . '?' . 'php');
-    $tokens['safe'] = ESToken::non_override('safe', $safe ? '_' : '');
     $tokens['machine_name'] = ESToken::non_override('machine_name', $machine_name);
-    $tokens['s_machine_name'] = ESToken::non_override(
-      's_machine_name',
-      ($safe ? '_' : '') . $machine_name,
-      'namespace-safe machine name');
     $tokens['sane'] = ESToken::non_override(
       'sane',
       ($safe ? '_' : '') . $machine_name,
@@ -72,7 +67,7 @@ class ESConfig {
       ' [create] or ... (view own is added automatically)');
     $tokens['view_modes'] = ESToken::map(
       'view_modes',
-      "['default' => 'Default']",
+      ['default' => 'Default'],
       'entity view modes, consult hook_entity_info for more info (machine_name => label map)'
     );
 
@@ -86,7 +81,6 @@ class ESConfig {
       'whether if a can_delete_hook is added, so other modules can lock ' .
       'entities of this type and prevent deletion');
 
-
     $tokens['has_bundle'] = ESToken::bool(
       'has_bundle',
       TRUE,
@@ -97,7 +91,14 @@ class ESConfig {
     $tokens['bundle_key_name'] = ESToken::machine_name(
       'bundle_key_name',
       'bid',
-      'bundle key name on entity object just like [type] on node objects');
+      'bundle key name on entity object just like [type] on node objects. ' .
+      "DON'T mistake with [bundle_name_key]");
+    $tokens['bundle_name_key'] = ESToken::machine_name(
+      'bundle_name_key',
+      'name',
+      'bundle name key on bundle entity object, this could simply be name, as in bundle name' .
+      "DON'T mistake with [bundle_key_name]");
+
     $tokens['bundle_table'] = ESToken::machine_name(
       'bundle_table',
       $machine_name . '_bundle',
@@ -114,7 +115,7 @@ class ESConfig {
       'whether if bundles are entity themselves');
     $tokens['default_bundles'] = ESToken::map(
       'default_bundles',
-      '{}',
+      ['test'],
       'default bundles, defined in code (machine name => title json map)');
 
     $e_path = str_replace('_', '-', $machine_name);
@@ -205,19 +206,17 @@ class ESConfig {
   // _________________________________________________________________ OVERRIDE
 
   function __get($name) {
-    if ($name === 'php') {
-      return '<' . '?php';
-    }
-    if ($name === 's') {
-      $name = 'sane';
-    }
-    if ($name === 'm') {
-      $name = 'machine_name';
+    switch ($name) {
+      case 's':
+        $name = 'sane';
+        break;
+      case 'm':
+        $name = 'machine_name';
+        break;
     }
     foreach ($this->t as $token) {
       if ($name === $token->name) {
-        //        echo "haha [" . $token->name . "][" . $token->value . "][" . $token->type . "]\n";
-        return $token->type === ESToken::NON_OVERRIDABLE ? $token->value : $token;
+        return $token;
       }
     }
     throw new RuntimeException("no such token: [$name]");
@@ -261,40 +260,25 @@ class ESToken {
   const FUNC = 'FUNC';
 
 
-  private $type;
+  private $_type;
 
-  private $name;
+  private $_name;
 
-  private $value;
+  private $_value;
 
-  private $desc;
+  private $_desc;
+
+  private $_is_valid;
+
+  private $_error;
 
 
   function __construct($type, $name, $value = NULL, $desc = NULL) {
-    if ($type < 0 || $type > 7) {
-      throw new RuntimeException("unknown type: [$type] for [$name] with value [$value]");
-    }
-    $this->type = $type;
-    $this->name = $name;
-    $this->set($value);
-    $this->desc = $desc;
-  }
-
-  function set($value) {
-    $this->value = $value;
-    return $this;
-  }
-
-  function get() {
-    switch ($this->type) {
-      case ESToken::FLAT_STRING_ARRAY:
-        return json_decode($this->value);
-      case ESToken::FLAT_STRING_MAP:
-        return json_decode($this->value, TRUE);
-        break;
-      default:
-        return $this->value;
-    }
+    $this->_type = $type;
+    $this->_name = $name;
+    $this->_desc = $desc;
+    $this->_value = $value;
+    $this->post_set();
   }
 
   function __get($name) {
@@ -303,75 +287,92 @@ class ESToken {
       'name',
       'type',
       'desc',
-      'isValid',
+      'is_valid',
       'error',
     ], TRUE)) {
-      throw new RuntimeException('can not access any property other than name, type, value, desc, isValid and error');
+      throw new RuntimeException('can not access any property other than name, type, value, desc, is_valid and error');
     }
     switch ($name) {
       case 'type':
-        return $this->type;
-
+        return $this->_type;
       case 'name':
-        return $this->name;
-
+        return $this->_name;
       case 'value':
-        return $this->get();
-
+        return $this->_value;
       case 'desc':
-        return $this->desc;
-
+        return $this->_desc;
+      case 'is_valid':
+        return $this->_is_valid;
       case 'error':
-        return $this->error();
-
-      case 'isValid':
-        return $this->isValid();
-
+        return $this->_error;
       default:
-        throw new RuntimeException('unknown property: ' . $name);
+        throw new AssertionError();
     }
   }
 
+  function __set($name, $value) {
+    if ($name !== 'value') {
+      throw new RuntimeException('only [value] can be set');
+    }
+    $this->_value = $value;
+    $this->post_set();
+    return $this;
+  }
+
+  function __toString() {
+    // sort of like var_export($thing, TRUE);
+    if ($this->_type === ESToken::FLAT_STRING_ARRAY) {
+      return json_encode($this->_value, JSON_FORCE_OBJECT);
+    }
+    if ($this->_type === ESToken::FLAT_STRING_MAP) {
+      return strtr(json_encode($this->_value), [
+        '"' => "'",
+        '}' => ']',
+        '{' => '[',
+        ':' => ' => ',
+      ]);
+    }
+    return (string) $this->_value;
+  }
 
   function validate() {
-    if ($err = self::check($this->value, $this->type)) {
-      throw new RuntimeException($err);
+    if (!$this->_is_valid) {
+      throw new RuntimeException('error: [' . $this->_error . ']');
     }
     return $this;
   }
 
-  private function isValid() {
-    return $this->error() ? FALSE : TRUE;
-  }
-
-  private function error() {
-    return self::check($this->value, $this->type);
+  private function post_set() {
+    $this->_error = self::check($this->_value, $this->_type, $this->_name);
+    $this->_is_valid = $this->_error ? FALSE : TRUE;
   }
 
 
   static function check($value, $type, $name = NULL) {
+    $say = str_replace("\n", ' ', var_export($value, TRUE));
+    $b = "[type::$type] - [name::$name] - [value::$say]";
     if ($value === NULL) {
-      $err = "$type::$name -> [null] is not valid";
+      $err = "$b null is not valid";
       return $err;
     }
     if ($type === ESToken::MACHINE_NAME) {
       $regex = '/^[a-z][_0-9a-z]*?$/';
-      $err = "MACHINE_NAME::$name -> [$value] must match the regex: $regex";
+      $err = "$b must match the regex: $regex";
       if (!is_string($value) || empty($value) || !preg_match($regex, $value)) {
         return $err;
       }
     }
     elseif ($type === ESToken::LABEL) {
       $regex = '/^[A-Za-z][_0-9a-zA-Z ]*?$/';
-      $err = "LABEL::$name -> [$value] must match the regex: $regex. " .
+      $err = "$b must match the regex: $regex. " .
         " Labels are constrained for now BUT can be changed later (after the module is generated)";
       if (!is_string($value) || empty($value) || !preg_match($regex, $value)) {
         return $err;
       }
     }
     elseif ($type === ESToken::URI) {
-      // TODO make this better and more rigorous? or perhaps it doesn't matteR?
-      $err = "URI::$name -> [$value] is not a valid uri. " .
+      // TODO make this better and more rigorous? or perhaps it doesn't matter?
+      $err = "$b is not a valid uri. " .
         " URIs are constrained for now BUT can be changed later (after the module is generated)";
       if ($value === '\<front\>') {
         return '';
@@ -379,7 +380,7 @@ class ESToken {
       if (!is_string($value) || empty($value)) {
         return $err;
       }
-      if (conut(str_replace('/', '', $value)) === 0) {
+      if (strlen(str_replace('/', '', $value)) === 0) {
         return $err;
       }
       if (!ctype_alnum(str_replace('/', '', $value)) === 0) {
@@ -390,7 +391,7 @@ class ESToken {
       }
     }
     elseif ($type === ESToken::BOOL) {
-      $err = "BOOL::$name -> [$value] is not a valid boolean. valid values: " .
+      $err = "$b is not a valid boolean. valid values: " .
         'y, n, t, f, false, true, yes, no, 0, 1 as digit or string ' .
         '(strings can be upper or lower case). empty is NOT valid';
       if (_entityspice_v_boolean($value) === NULL) {
@@ -398,7 +399,7 @@ class ESToken {
       };
     }
     elseif ($type === ESToken::FLAT_STRING_ARRAY) {
-      $err = "ARRAY::$name -> [$value] must be a valid FLAT json ARRAY (not map), containing only ascii alpha-num.";
+      $err = "$b must be a valid FLAT json ARRAY (not map), containing only ascii alpha-num.";
       $json = NULL;
       try {
         $json = json_decode($value);
@@ -420,7 +421,7 @@ class ESToken {
       }
     }
     elseif ($type === ESToken::FLAT_STRING_MAP) {
-      $err = "MAP::$name -> [$value] must be a valid FLAT json map (simple string' . 
+      $err = "$b must be a valid FLAT json map (simple string' . 
       ' key (machine-name-like), simple string value), containing only ascii alpha-num.";
       $json = NULL;
       try {
@@ -442,22 +443,21 @@ class ESToken {
     }
     elseif ($type === ESToken::FUNC) {
       $regex = '/^[a-z][_0-9a-z]*?$/';
-      $err = "FUNCTION_NAME::$name -> [$value] must match the regex: $regex";
+      $err = "$b must match the regex: $regex";
       if (!is_string($value) || empty($value) || !preg_match($regex, $value)) {
         return $err;
       }
     }
     elseif ($type === ESToken::NON_OVERRIDABLE) {
-      $err = "NON_OVERRIDABLE::$name -> [$value] can not be overridden.";
+      $err = "$b can not be overridden.";
       return $err;
     }
     else {
-      $err = "UNKNOWN::$name -> [$value] do not know how to validate.";
+      $err = "$b do not know how to validate.";
       return $err;
     }
     return '';
   }
-
 
   static function non_override($name, $value, $desc = NULL) {
     return new ESToken(ESToken::NON_OVERRIDABLE, $name, $value, $desc);
@@ -495,30 +495,6 @@ class ESToken {
     return new ESToken(ESToken::FUNC, $name, $value, $desc);
   }
 
-}
-
-function _entityspice_v_boolean($value) {
-  if (is_string($value)) {
-    $value = trim(strtolower($value));
-  }
-  $yes = ['y', 'yes', 't', 'true', '1', 1, TRUE];
-  $no = ['n', 'no', 'f', 'false', '0', 0, FALSE];
-  if (in_array($value, $yes, TRUE)) {
-    return TRUE;
-  }
-  if (in_array($value, $no, TRUE)) {
-    return FALSE;
-  }
-  return NULL;
-}
-
-function _entityspice_calculate_bundle_argument($path) {
-  foreach (explode('/', $path) as $index => $part) {
-    if ($part[0] === '%') {
-      return $index;
-    }
-  }
-  throw new RuntimeException('could not determine bundle argument: ' . $path);
 }
 
 
@@ -689,13 +665,13 @@ function _entityspice_drush_pre_ekran($machine_name = NULL) {
  */
 function _entityspice_pm_download_destination_lookup($type, $drupal_root, $sitepath, $create = FALSE) {
   $destination = $type . 's';
-  // Prefer /contrib if it exists.
+  // Prefer /custom if it exists.
   if ($sitepath) {
     $destination = $sitepath . '/' . $destination;
   }
-  $contrib = $destination . '/contrib';
-  if (is_dir($contrib)) {
-    $destination = $contrib;
+  $custom = $destination . '/custom';
+  if (is_dir($custom)) {
+    $destination = $custom;
   }
   if ($create) {
     drush_log(dt('Attempting to create destination directory at !dir', ['!dir' => $destination]));

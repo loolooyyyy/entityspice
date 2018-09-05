@@ -1,4 +1,4 @@
-<?php print $a->php; ?>
+<?php echo $a->php; ?>
 
 /**
  * Implements hook_schema().
