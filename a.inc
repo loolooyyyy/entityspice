@@ -1,37 +1,5 @@
 <?php
 
-// TODO
-abstract class EntitySpiceEntity extends Entity {
-
-
-  /**
-   * Override buildContent() to add entity properties.
-   *
-   * @param string $view_mode
-   * @param null $langcode
-   * @param array $content
-   *
-   * @return mixed
-   */
-  final public function buildContent($view_mode = 'full', $langcode = NULL, array $content = []) {
-    // TODO all custom fields.
-    $content['title'] = [
-      '#theme' => 'entityspice_entity_property_field',
-      // TODO
-      '#label' => t('Title'),
-      // TODO
-      '#items' => ['#markup' => check_plain($this->wrapper()->title->value())],
-      // TODO
-      '#classes' => 'field field-label-inline clearfix',
-    ];
-
-    return entity_get_controller($this->entityType)
-      ->buildContent($this, $view_mode, $langcode, $content);
-  }
-
-}
-
-// TODO
 abstract class EntitySpiceMetadataController extends EntityDefaultMetadataController {
 
   final public function entityPropertyInfo() {
@@ -109,32 +77,7 @@ abstract class EntitySpiceMetadataController extends EntityDefaultMetadataContro
 
 }
 
-// TODO
 abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityFormController {
-
-  public function entityForm($f, &$fs) {
-    $f = parent::entityForm($f, $fs);
-    $entity = $f['#entity'];
-    $info = _entityspice_get_info($this->entityType);
-    // TODO?
-    // Do some prep work on the entities, similarly to node_form().
-    if ($info->hasTitle()) {
-      $key = $info->titleKey();
-      $label = $info->titleLabel();
-      if (!isset($entity->{$key})) {
-        $entity->{$key} = '';
-      }
-      $f[$key] = [
-        '#type' => 'textfield',
-        '#title' => t($label),
-        '#default_value' => $entity->{$key},
-        '#maxlength' => 255,
-        '#required' => TRUE,
-        '#weight' => -6,
-      ];
-    }
-    return $f;
-  }
 
   public function entityFormSubmit(&$f, &$fs) {
     parent::entityFormSubmit($f, $fs);
@@ -147,11 +90,6 @@ abstract class EntitySpiceInlineEntityFormController extends EntityInlineEntityF
   }
 
 }
-
-abstract class Shit extends  EntityAPIController {
-
-}
-
 // ____________________________________________________________________________
 
 
@@ -163,8 +101,6 @@ abstract class Shit extends  EntityAPIController {
  * @return mixed
  */
 function _entityspice_entity_info($machine_name) {
-  $info = _entityspice_get_info($machine_name);
-
   $ret_info[$machine_name] = [
     'module' => $info->module(),
     'label' => $info->humanName(),
@@ -216,16 +152,6 @@ function _entityspice_entity_info($machine_name) {
       'controller class' => $info->bundleUIControllerClass(),
     ],
   ];
-
-  if (!$info->hasBundle()) {
-    unset($ret_info[$info->bundleMachineName()]);
-  }
-  if (!$info->hasRevision()) {
-    unset($ret_info[$machine_name]['revision table']);
-    unset($ret_info[$machine_name]['entity keys']['revision']);
-  }
-
-  return $ret_info;
 }
 
 /**
