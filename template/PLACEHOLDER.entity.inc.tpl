@@ -120,10 +120,10 @@ function <?php echo $a->s ?>_uri_callback($entity) {
 }
 
 function <?php echo $a->s ?>_label_callback($entity, $entity_type) {
-<?php if($m->has_label_key->value): ?>
-  $title = $entity-><?php echo $m->label_key_name; ?>;
+<?php if($a->has_label_key->value): ?>
+  $title = $entity-><?php echo $a->label_key_name; ?>;
   return empty($title) ? entity_id($entity_type, $entity) : $title;
 <?php else: ?>
-  return $entity-><?php echo $m->id_key; ?>;
+  return $entity-><?php echo $a->id_key; ?>;
 <?php endif; ?>
 }

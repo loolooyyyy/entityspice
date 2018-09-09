@@ -3,7 +3,7 @@
 /**
 * Implements hook_menu().
 */
-function <?php echo $a->m; ?>_menu() {
+function _<?php echo $a->m; ?>_menu() {
   $machine_name = '<?php echo $a->m; ?>';
   $safe_name= '<?php echo $a->s; ?>';
   $s_name = '<?php echo $a->s; ?>';
@@ -137,7 +137,7 @@ function <?php echo $a->m; ?>_menu() {
  *
  * Adds action link to 'xxxx/yyyy/add' on 'xxxx/yyyyy' page.
  */
-function <?php echo $a->m ?>_menu_local_task_alter(&$data, $router_item, $root_path) {
+function _<?php echo $a->m ?>_menu_local_task_alter(&$data, $router_item, $root_path) {
   $machine_name = NULL;
   $parent_admin_path = '';
   if ($parent_admin_path === $root_path) {
@@ -216,7 +216,7 @@ function <?php echo $a->s; ?>_add_page(<?php if($a->has_bundle->value): ?>$bundl
   $module = '<?php echo $a->m; ?>';
   $add_form = '<?php echo $info['add form']; ?>';
 
-  $form_callback = ;
+  $form_callback = '';
 
   module_load_include($module, 'forms.inc');
 

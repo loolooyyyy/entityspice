@@ -1,5 +1,6 @@
 <?php echo $a->php; ?>
 
+<?php if($a->has_owner->value): ?>
 /**
  * Check to see if $account is the owner of $entity.
  */
@@ -12,7 +13,7 @@ function <?php echo $a->s; ?>_entity_access_is_self($entity, $account) {
 
   return FALSE;
 }
-
+<?php endif; ?>
 
 /**
  * Check to see if $user has the $op access on $entity.
@@ -24,10 +25,10 @@ function <?php echo $a->s; ?>_entity_access_is_self($entity, $account) {
 <?php endif; ?>
  */
 function <?php echo $a->s; ?>_entity_access($op,<?php if($a->has_bundle->value): ?> $bundle = NULL,<?php endif; ?> $entity = NULL, $user = NULL) {
-  $access_controlled_actions = <?php echo $a->access_controlled_actions ?>
+  $access_controlled_actions = <?php echo $a->access_controlled_actions ?>;
   $machine_name = <?php echo $a->m ?>;
 
-  if (!in_array($op, $access_controlled_actions)) {
+  if (!in_array($op, $access_controlled_actions) && $op !== "administer $machine_name") {
     return FALSE;
   }
 
@@ -45,6 +46,14 @@ function <?php echo $a->s; ?>_entity_access($op,<?php if($a->has_bundle->value):
     throw new RuntimeException('can not determine user');
   }
 
+  if($account->uid === 1) {
+    return TRUE;
+  }
+
+  if (user_access("administer $machine_name", $account)) {
+    return TRUE;
+  }
+
   if (user_access("$machine_name - $op", $account)) {
     return TRUE;
   }
@@ -55,6 +64,7 @@ function <?php echo $a->s; ?>_entity_access($op,<?php if($a->has_bundle->value):
   }
 <?php endif; ?>
 
+<?php if($a->has_owner->value): ?>
   $self = <?php echo $a->s; ?>_entity_access_is_self($entity, $account);
   if ($self && user_access("own - $machine_name - $op", $account)) {
     return TRUE;
@@ -65,8 +75,42 @@ function <?php echo $a->s; ?>_entity_access($op,<?php if($a->has_bundle->value):
     return TRUE;
   }
 <?php endif; ?>
+<?php endif; ?>
 
   return FALSE;
 }
 
+/**
+ * Implements hook_permission().
+ */
+function <?php echo $a->m; ?>_permission() {
+  $machine_name = '<?php echo $a->m; ?>';
+  $actions = <?php echo $a->access_controlled_actions; ?>;
+<?php if($a->has_bundle->value): ?>
+
+  $bundles = <?php echo $a->s; ?>_get_bundles_names();
+<?php endif; ?>
+
+  $permissions = ["administer $machine_name"];
+
+  foreach($actions as $op) {
+    $permissions[] = "$machine_name - $op";
+<?php if($a->has_owner->value): ?>
+    $permissions[] = "own - $machine_name - $op";
+<?php endif; ?>
+  }
+
+<?php if($a->has_bundle->value): ?>
+  foreach($actions as $op) {
+    foreach(<?php echo $a->s; ?>_get_bundles_names() as $bundle) {
+      $permissions[] = "$machine_name - $bundle - $op";
+<?php if($a->has_owner->value): ?>
+      $permissions[] = "own - $machine_name - $bundle - $op";
+<?php endif; ?>
+    }
+  }
+<?php endif; ?>
+
+  return $permissions;
+}
 

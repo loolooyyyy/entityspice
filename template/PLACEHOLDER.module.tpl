@@ -1,41 +1,13 @@
 <?php echo $a->php; ?>
 
 require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.access.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.admin.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.bundle.class.inc';
+require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.bundle.inc';
 require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.class.inc';
-require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.display.inc';
 require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.entity.inc';
 require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.menu.inc';
+// require_once dirname(__FILE__) . '/<?php echo $a->m; ?>.display.inc';
 
 class <?php echo $a->uc; ?>Exception extends RuntimeException {
-}
-
-/**
- * Implements hook_permission().
- */
-function <?php echo $a->m; ?>_permission() {
-  $machine_name = '<?php echo $a->m; ?>';
-  $actions = '<?php echo $a->access_controlled_actions; ?>';
-
-  $bundles = <?php echo $a->s; ?>_get_bundles_names();
-  $permissions = [];
-
-  foreach($actions as $op) {
-    $permissions[] = "$machine_name - $op";
-    $permissions[] = "own - $machine_name - $op";
-  }
-
-<?php if($a->has_bundle->value): ?>
-  foreach($actions as $op) {
-    foreach(<?php echo $a->s; ?>_get_bundles_names() as $bundle) {
-      $permissions[] = "$machine_name - $bundle - $op";
-      $permissions[] = "own - $machine_name - $bundle - $op";
-    }
-  }
-<?php endif; ?>
-
-  return $permissions;
 }
 
 /**
@@ -48,12 +20,20 @@ function <?php echo $a->m; ?>_entity_info() {
 <?php if($a->has_revision->value): ?>
   $i['revision table'] = '<?php echo $a->revision_table; ?>';
 <?php endif; ?>
-  $i['static cache'] = '<?php echo $a->has_static_cache; ?>';
-  $i['field cache'] = '<?php echo $a->has_field_cache; ?>';
-  $i['load hook'] = '<?php echo $a->m; ?>_load';
+<?php if($a->has_static_cache->value): ?>
+  $i['static cache'] = TRUE;
+<?php endif; ?>
+<?php if($a->has_field_cache->value): ?>
+    $i['field cache'] = TRUE;
+<?php endif; ?>
+//  $i['load hook'] = '<?php echo $a->m; ?>_load';
   $i['uri callback'] = '<?php echo $a->s; ?>_uri_callback';
   $i['label callback'] = '<?php echo $a->s; ?>_label_callback';
-  $i['is_fieldable'] = '<?php echo $a->is_fieldable; ?>';
+<?php if($a->is_fieldable->value): ?>
+  $i['fieldable'] = TRUE;
+<?php else: ?>
+  $i['is_fieldable'] = FALSE;
+<?php endif; ?>
 <?php if($a->has_translation->value): ?>
   $i['translation']['locale'] = TRUE;
 <?php endif; ?>
@@ -72,7 +52,7 @@ function <?php echo $a->m; ?>_entity_info() {
 <?php endif; ?>
 
 <?php if($a->has_bundle->value): ?>
-  $i['bundle keys']['bundle'] = <?php echo $a->bundle_name_key; ?>;
+  $i['bundle keys']['bundle'] = '<?php echo $a->bundle_name_key; ?>';
 <?php endif; ?>
 
 <?php if($a->has_bundle->value): ?>
@@ -94,6 +74,6 @@ function <?php echo $a->m; ?>_entity_info() {
     $i['view modes'][$mode]['custom settings'] = TRUE;
   }
 
-  return $i;
+  return ['<?php echo $a->m ?>' => $i];
 }
 

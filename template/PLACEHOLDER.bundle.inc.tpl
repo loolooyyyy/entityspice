@@ -43,7 +43,7 @@ class <?php echo $a->uc; ?>Bundle extends Entity {
  * The controller class for entity bundles contains methods for CRUD
  * operations. The load method is inherited from the default controller.
  */
-class <?php echo $a->uc; ?>Controller extends EntityAPIControllerExportable {
+class <?php echo $a->uc; ?>BundleController extends EntityAPIControllerExportable {
 
   const _entity_type = '<?php echo $a->bundle_machine_name; ?>';
 
@@ -51,13 +51,12 @@ class <?php echo $a->uc; ?>Controller extends EntityAPIControllerExportable {
    * @see parent
    */
   final public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    <?php if($a->bundle_has_lock->value): ?>
-    foreach($ids as $id) {
+    // TODO support locked property
+    <?php if($a->bundle_has_lock->value): ?>foreach($ids as $id) {
       if(<?php echo $a->s; ?>_bundle_has_entity($id)) {
         throw new RuntimeException('entities of this type exist, it is locked and can not be deleted: [ ' . $id . ']');
       }
-    }
-    <?php endif; ?>
+    }<?php endif; ?>
     parent::delete($ids, $transaction);
     menu_rebuild();
   }
@@ -71,7 +70,8 @@ class <?php echo $a->uc; ?>Controller extends EntityAPIControllerExportable {
 /**
  * Entity Bundle UI controller.
  */
-class <?php echo $a->uc; ?>BundleUIController extends EntityBundleableUIController {
+class <?php echo $a->uc; ?>BundleUIController extends EntityDefaultUIController {
+
   const _entity_type = '<?php echo $a->bundle_machine_name; ?>';
 
   public function __construct($entity_info) {
@@ -81,26 +81,26 @@ class <?php echo $a->uc; ?>BundleUIController extends EntityBundleableUIControll
 
 
 /**
-* Create a new bundle object - DOES NOT SAVE IT.
-*
-* @param array $values
-*   Associative array of values. At least include ['type' => $type].
-*
-* @return \Entity created bundle.
-*/
+ * Create a new bundle object - DOES NOT SAVE IT.
+ *
+ * @param array $values
+ *   Associative array of values. At least include ['type' => $type].
+ *
+ * @return \Entity created bundle.
+ */
 function <?php echo $a->s ?>_bundle_create(array $values = []) {
   $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
   return entity_get_controller($bundle_machine_name)->create($values);
 }
 
 /**
-* Load a bundle entity by it's machine name.
-*
-* @param string $name The machine-readable name of a bundle to load.
-*
-* @return array.
-*   An bundle entity array or FALSE if $name does not exist.
-*/
+ * Load a bundle entity by it's machine name.
+ *
+ * @param string $name The machine-readable name of a bundle to load.
+ *
+ * @return array.
+ *   An bundle entity array or FALSE if $name does not exist.
+ */
 function <?php echo $a->s ?>_bundle_load($name) {
   $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
 
@@ -113,19 +113,19 @@ function <?php echo $a->s ?>_bundle_load($name) {
 }
 
 /**
-* Deletes a bundle.
-*
-* @param entity $bundle the bundle to delete (bundle object)
-*/
+ * Deletes a bundle.
+ *
+ * @param entity $bundle the bundle to delete (bundle object)
+ */
 function <?php echo $a->s; ?>_bundle_delete($bundle) {
   $bundle->delete();
 }
 
 /**
-* Saves a bundle.
-*
-* @param entity $bundle the bundle to save (bundle object)
-*/
+ * Saves a bundle.
+ *
+ * @param entity $bundle the bundle to save (bundle object)
+ */
 function <?php echo $a->s; ?>_bundle_save($bundle) {
   $bundle->save();
 }
@@ -161,14 +161,14 @@ function <?php echo $a->s; ?>_get_bundles_options_list($check_plain = TRUE) {
 }
 
 /**
-* Check if entities of this bundle exist.
-*/
+ * Check if entities of this bundle exist.
+ */
 function <?php echo $a->s; ?>_bundle_has_entity($name) {
   $machine_name = '<?php echo $a->m ?>';
   $bundle_machine_name = '<?php echo $a->bundle_machine_name; ?>';
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', $machine_name);
-  // TODO
-  $query->entityCondition('bundle', $name); // IS THIS RIGHT?
+  // TODO, does it work?
+  $query->entityCondition('bundle', $name);
   return $query->count()->execute() > 0;
 }

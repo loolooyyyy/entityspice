@@ -7,16 +7,183 @@
 require_once 'entityspice_error.inc';
 
 
-/**
- * This implementation does NOT call any of subclass methods. Do NOT expect
- * behaviour of a method to change, overriding some other method.
- *
- * None of methods declared in this class or implementation should take a key,
- * and nothing other than simple values indication support for a future should
- * be returned. It must be a simple immutable value class with no logic. Else,
- * it is a design error, a disaster.
- */
-class ESConfig {
+function _entityspice_tokens($machine_name) {
+  $tokens['php'] = ESToken::non_override('php', '<' . '?' . 'php' . "\n");
+  $tokens['machine_name'] = ESToken::non_override('machine_name', $machine_name);
+
+  $tokens['human_name'] = ESToken::label(
+    'human_name',
+    ucwords(str_replace('_', ' ', $machine_name)),
+    'human readable name, aka label.');
+
+  $uc = str_replace(' ', '', $tokens['human_name']->value);
+  $tokens['uc'] = ESToken::non_override('uc', $uc, 'upper case first, machine camel name');
+  $tokens['lc'] = ESToken::non_override('lc', lcfirst($uc), 'lower case first, machine camel name');
+
+  $tokens['id_key'] = ESToken::machine_name(
+    'id_key',
+    'id',
+    'id key, on entity object, just like nid on $node->nid');
+  $tokens['base_table'] = ESToken::machine_name(
+    'base_table',
+    $machine_name,
+    'database table name');
+  $tokens['is_fieldable'] = ESToken::bool(
+    'is_fieldable',
+    TRUE,
+    'whether if this is a fieldable entity type, or a non-fieldable one');
+
+  $tokens['access_controlled_actions'] = ESToken::arr(
+    'access_controlled_actions',
+    ['administer', 'create', 'delete', 'view', 'archive',],
+    'actions on the entity, which are controlled by permission, just like ' .
+    'node creation, node view, ...; ONLY PROVIDE THE VERB, such as [view] or' .
+    ' [create] or ... (view own is added automatically)' .
+    ' this value must be set in json array format, as in ["x", "y", "z", ... ].'
+  );
+  $tokens['view_modes'] = ESToken::map(
+    'view_modes',
+    ['default' => 'Default'],
+    'entity view modes, consult hook_entity_info for more info.',
+    ' this value must be set in json map format, as in {"machine_name": "label", ...}'
+  );
+
+  $tokens['has_devel_support'] = ESToken::bool(
+    'has_devel_support',
+    TRUE,
+    'whether if this entity type has special support for devel module, just like node/%nid/devel');
+  $tokens['has_can_delete_hook'] = ESToken::bool(
+    'has_can_delete_hook',
+    TRUE,
+    'whether if a can_delete_hook is added, so other modules can lock ' .
+    'entities of this type and prevent deletion');
+
+  $tokens['has_bundle'] = ESToken::bool(
+    'has_bundle',
+    TRUE,
+    'whether if this entity type supports bundles, just like node types');
+  $tokens['bundle_machine_name'] = ESToken::machine_name(
+    'bundle_machine_name',
+    $machine_name . '_bundle');
+  $tokens['bundle_key_name'] = ESToken::machine_name(
+    'bundle_key_name',
+    'bundle',
+    'bundle key name on entity object just like [type] on node objects. ' .
+    "DON'T mistake with [bundle_name_key]");
+  $tokens['bundle_name_key'] = ESToken::machine_name(
+    'bundle_name_key',
+    'name',
+    'bundle name key on bundle entity object, this could simply be name, as in bundle name' .
+    "DON'T mistake with [bundle_key_name]");
+
+  $tokens['bundle_table'] = ESToken::machine_name(
+    'bundle_table',
+    $machine_name . '_bundle',
+    'the table holding entity bundles in database');
+  $tokens['bundle_has_lock'] = ESToken::bool(
+    'bundle_has_lock',
+    TRUE,
+    'whether if bundles are lockable and deletion can be prevented, ' .
+    'such as when entities of this bundle still exist');
+  // TODO
+  $tokens['bundle_is_entity'] = ESToken::bool(
+    'bundle_is_entity',
+    TRUE,
+    'whether if bundles are entity themselves');
+  $tokens['default_bundles'] = ESToken::map(
+    'default_bundles',
+    ['test' => 'Test'],
+    'default bundles, defined in code (machine name => title json map)' .
+    ' this value must be set in json map format, as in {"machine_name": "label", ...}'
+  );
+
+  $e_path = str_replace('_', '-', $machine_name);
+
+  // probably should change to parent admin path, but then we need a
+  // isOverridden flag to not change it then, which will blow up the whole
+  // token logic and all. so just forget it.
+  $tokens['bundle_redirect'] = ESToken::uri(
+    'bundle_redirect',
+    'admin/structure/' . $e_path,
+    'the path to redirect user to, after when a new bundle is created or removed');
+  $tokens['is_bundle_fieldable'] = ESToken::bool(
+    'is_bundle_fieldable',
+    TRUE,
+    'whether if bundles are fieldable themselves');
+
+  $tokens['has_revision'] = ESToken::bool(
+    'has_revision',
+    FALSE,
+    'whether if the entity type supports revisions, just like node revisions');
+  $tokens['revision_table'] = ESToken::machine_name(
+    'revision_table',
+    $machine_name . '_revision',
+    'the table holding entity revisions in database');
+  $tokens['revision_key_name'] = ESToken::machine_name(
+    'revision_key_name',
+    'rid',
+    'revision key name on entity object just like [rid] on node objects');
+  $tokens['has_revision_log'] = ESToken::bool(
+    'has_revision_log',
+    TRUE,
+    'whether if the entity type has revision logs just like node');
+
+  $tokens['has_owner'] = ESToken::bool(
+    'has_owner',
+    TRUE,
+    'just like $node->uid');
+
+  $tokens['has_static_cache'] = ESToken::bool(
+    'has_static_cache',
+    TRUE,
+    'refer to hook_entity_info docs');
+  $tokens['has_field_cache'] = ESToken::bool(
+    'has_field_cache',
+    TRUE,
+    'refer to hook_entity_info docs');
+
+  $tokens['has_label_key'] = ESToken::bool(
+    'has_label_key',
+    FALSE,
+    'whether if entity object has a label property');
+  $tokens['label_key_name'] = ESToken::machine_name(
+    'label_key_name',
+    'title',
+    'the label property on entity object just like node->title, if any');
+
+  $tokens['has_language_key'] = ESToken::bool(
+    'has_language_key',
+    FALSE,
+    'whether if entity object has a language property');
+  $tokens['has_translation'] = ESToken::bool(
+    'has_translation',
+    FALSE,
+    'whether to introduce locale module as translation module or not');
+
+  $tokens['parent_admin_path'] = ESToken::uri(
+    'parent_admin_path',
+    'admin/structure/' . $e_path
+  );
+  $tokens['parent_userland_path'] = ESToken::uri(
+    'parent_userland_path',
+    $e_path,
+    'the path on which list of entities are accessible, just like /node'
+  );
+  $tokens['entity_delete_redirect_path'] = ESToken::uri(
+    'entity_delete_redirect_path',
+    $e_path,
+    'the path to redirect the user to, when an entity is deleted. A more complex logic can be later added in code.'
+  );
+
+  $tokens['has_inline_entity_form_support'] = ESToken::bool(
+    'has_inline_entity_form_support',
+    TRUE,
+    'whether if InlineEntityForm module is supported.');
+
+  return $tokens;
+}
+
+final class ESConfig {
 
   private $t;
 
@@ -27,176 +194,14 @@ class ESConfig {
    * is not implemented.
    */
   public function __construct($machine_name, $safe = TRUE) {
-    ESToken::machine_name('machine_name', $machine_name)->validate();
-    ESToken::bool('safe', $safe)->validate();
+    ESToken::check($machine_name, ESToken::MACHINE_NAME, 'machine_name');
+    ESToken::check($safe, ESToken::BOOL, 'safe_namespace');
 
-    $tokens['php'] = ESToken::non_override('php', '<' . '?' . 'php');
-    $tokens['machine_name'] = ESToken::non_override('machine_name', $machine_name);
-    $tokens['sane'] = ESToken::non_override(
+    $this->t = _entityspice_tokens($machine_name);
+    $this->t['sane'] = ESToken::non_override(
       'sane',
       ($safe ? '_' : '') . $machine_name,
       'namespace-safe machine name');
-
-    $tokens['human_name'] = ESToken::label(
-      'human_name',
-      ucwords(str_replace('_', ' ', $machine_name)),
-      'human readable name, aka label.');
-
-    $uc = str_replace(' ', '', $tokens['human_name']->value);
-    $tokens['uc'] = ESToken::non_override('uc', $uc, 'upper case first, machine camel name');
-    $tokens['lc'] = ESToken::non_override('lc', lcfirst($uc), 'lower case first, machine camel name');
-
-    $tokens['id_key'] = ESToken::machine_name(
-      'id_key',
-      'id',
-      'id key, on entity object, just like nid on $node->nid');
-    $tokens['base_table'] = ESToken::machine_name(
-      'base_table',
-      $machine_name,
-      'database table name');
-    $tokens['is_fieldable'] = ESToken::bool(
-      'is_fieldable',
-      TRUE,
-      'whether if this is a fieldable entity type, or a non-fieldable one');
-
-    $tokens['access_controlled_actions'] = ESToken::arr(
-      'access_controlled_actions',
-      "[ 'administer', 'create', 'delete', 'view', 'archive', ]",
-      'actions on the entity, which are controlled by permission, just like ' .
-      'node creation, node view, ...; ONLY PROVIDE THE VERB, such as [view] or' .
-      ' [create] or ... (view own is added automatically)');
-    $tokens['view_modes'] = ESToken::map(
-      'view_modes',
-      ['default' => 'Default'],
-      'entity view modes, consult hook_entity_info for more info (machine_name => label map)'
-    );
-
-    $tokens['has_devel_support'] = ESToken::bool(
-      'has_devel_support',
-      TRUE,
-      'whether if this entity type has special support for devel module, just like node/%nid/devel');
-    $tokens['has_can_delete_hook'] = ESToken::bool(
-      'has_can_delete_hook',
-      TRUE,
-      'whether if a can_delete_hook is added, so other modules can lock ' .
-      'entities of this type and prevent deletion');
-
-    $tokens['has_bundle'] = ESToken::bool(
-      'has_bundle',
-      TRUE,
-      'whether if this entity type supports bundles, just like node types');
-    $tokens['bundle_machine_name'] = ESToken::machine_name(
-      'bundle_machine_name',
-      $machine_name . '_bundle');
-    $tokens['bundle_key_name'] = ESToken::machine_name(
-      'bundle_key_name',
-      'bid',
-      'bundle key name on entity object just like [type] on node objects. ' .
-      "DON'T mistake with [bundle_name_key]");
-    $tokens['bundle_name_key'] = ESToken::machine_name(
-      'bundle_name_key',
-      'name',
-      'bundle name key on bundle entity object, this could simply be name, as in bundle name' .
-      "DON'T mistake with [bundle_key_name]");
-
-    $tokens['bundle_table'] = ESToken::machine_name(
-      'bundle_table',
-      $machine_name . '_bundle',
-      'the table holding entity bundles in database');
-    $tokens['bundle_has_lock'] = ESToken::bool(
-      'bundle_has_lock',
-      TRUE,
-      'whether if bundles are lockable and deletion can be prevented, ' .
-      'such as when entities of this bundle still exist');
-    // TODO
-    $tokens['bundle_is_entity'] = ESToken::bool(
-      'bundle_is_entity',
-      TRUE,
-      'whether if bundles are entity themselves');
-    $tokens['default_bundles'] = ESToken::map(
-      'default_bundles',
-      ['test'],
-      'default bundles, defined in code (machine name => title json map)');
-
-    $e_path = str_replace('_', '-', $machine_name);
-
-    // probably should change to parent admin path, but then we need a
-    // isOverridden flag to not change it then, which will blow up the whole
-    // token logic and all. so just forget it.
-    $tokens['bundle_redirect'] = ESToken::uri(
-      'bundle_redirect',
-      'admin/structure/' . $e_path,
-      'the path to redirect user to, after when a new bundle is created or removed');
-    $tokens['is_bundle_fieldable'] = ESToken::bool(
-      'is_bundle_fieldable',
-      TRUE,
-      'whether if bundles are fieldable themselves');
-
-    $tokens['has_revision'] = ESToken::bool(
-      'has_revision',
-      FALSE,
-      'whether if the entity type supports revisions, just like node revisions');
-    $tokens['revision_table'] = ESToken::machine_name(
-      'revision_table',
-      $machine_name . '_revision',
-      'the table holding entity revisions in database');
-    $tokens['revision_key_name'] = ESToken::machine_name(
-      'revision_key_name',
-      'rid',
-      'revision key name on entity object just like [rid] on node objects');
-    $tokens['has_revision_log'] = ESToken::bool(
-      'has_revision_log',
-      TRUE,
-      'whether if the entity type has revision logs just like node');
-
-    $tokens['has_static_cache'] = ESToken::bool(
-      'has_static_cache',
-      TRUE,
-      'refer to hook_entity_info docs');
-    $tokens['has_field_cache'] = ESToken::bool(
-      'has_field_cache',
-      TRUE,
-      'refer to hook_entity_info docs');
-
-    $tokens['has_label_key'] = ESToken::bool(
-      'has_label_key',
-      FALSE,
-      'whether if entity object has a label property');
-    $tokens['label_key_name'] = ESToken::bool(
-      'label_key_name',
-      'title',
-      'the label property on entity object just like node->title, if any');
-
-    $tokens['has_language_key'] = ESToken::bool(
-      'has_language_key',
-      FALSE,
-      'whether if entity object has a language property');
-    $tokens['has_translation'] = ESToken::bool(
-      'has_translation',
-      FALSE,
-      'whether to introduce locale module as translation module or not');
-
-    $tokens['parent_admin_path'] = ESToken::uri(
-      'parent_admin_path',
-      'admin/structure/' . $e_path
-    );
-    $tokens['parent_userland_path'] = ESToken::uri(
-      'parent_userland_path',
-      $e_path,
-      'the path on which list of entities are accessible, just like /node'
-    );
-    $tokens['entity_delete_redirect_path'] = ESToken::uri(
-      'entity_delete_redirect_path',
-      $e_path,
-      'the path to redirect the user to, when an entity is deleted. A more complex logic can be later added in code.'
-    );
-
-    $tokens['has_inline_entity_form_support'] = ESToken::bool(
-      'has_inline_entity_form_support',
-      TRUE,
-      'whether if InlineEntityForm module is supported.');
-
-    $this->t = $tokens;
   }
 
   function uriCallback() {
@@ -224,7 +229,8 @@ class ESConfig {
 
   function __set($name, $value) {
     /** @noinspection PhpUndefinedMethodInspection */
-    $this->__get($name)->set($value)->validate();
+    $this->__get($name)->value = $value;
+    $this->__get($name)->validate();
   }
 
   function names() {
@@ -239,7 +245,7 @@ class ESConfig {
 
 }
 
-class ESToken {
+final class ESToken {
 
   const NON_OVERRIDABLE = 'NON_OVERRIDABLE';
 
@@ -282,16 +288,6 @@ class ESToken {
   }
 
   function __get($name) {
-    if (!in_array($name, [
-      'value',
-      'name',
-      'type',
-      'desc',
-      'is_valid',
-      'error',
-    ], TRUE)) {
-      throw new RuntimeException('can not access any property other than name, type, value, desc, is_valid and error');
-    }
     switch ($name) {
       case 'type':
         return $this->_type;
@@ -306,7 +302,8 @@ class ESToken {
       case 'error':
         return $this->_error;
       default:
-        throw new AssertionError();
+        throw new RuntimeException("can not access [$name], " .
+          'can not access any property other than [name, type, value, desc, is_valid, error]');
     }
   }
 
@@ -314,25 +311,36 @@ class ESToken {
     if ($name !== 'value') {
       throw new RuntimeException('only [value] can be set');
     }
+    if (gettype($value) === 'string' && $this->_type === ESToken::FLAT_STRING_ARRAY) {
+      $value = json_decode($value, JSON_FORCE_OBJECT);
+    }
+    if (gettype($value) === 'string' && $this->_type === ESToken::FLAT_STRING_MAP) {
+      $value = json_decode($value, JSON_FORCE_OBJECT);
+    }
+    if ($this->_type === ESToken::BOOL) {
+      $value = _entityspice_v_boolean($value);
+    }
     $this->_value = $value;
     $this->post_set();
-    return $this;
   }
 
   function __toString() {
     // sort of like var_export($thing, TRUE);
-    if ($this->_type === ESToken::FLAT_STRING_ARRAY) {
-      return json_encode($this->_value, JSON_FORCE_OBJECT);
+    switch ($this->_type) {
+      case ESToken::FLAT_STRING_ARRAY:
+        return json_encode($this->_value); // , JSON_FORCE_OBJECT);
+      case ESToken::FLAT_STRING_MAP:
+        return strtr(json_encode($this->_value), [
+          '"' => "'",
+          '}' => ']',
+          '{' => '[',
+          ':' => ' => ',
+        ]);
+      case ESToken::BOOL:
+        return $this->_value ? 'TRUE' : 'FALSE';
+      default:
+        return (string) $this->_value;
     }
-    if ($this->_type === ESToken::FLAT_STRING_MAP) {
-      return strtr(json_encode($this->_value), [
-        '"' => "'",
-        '}' => ']',
-        '{' => '[',
-        ':' => ' => ',
-      ]);
-    }
-    return (string) $this->_value;
   }
 
   function validate() {
@@ -398,11 +406,11 @@ class ESToken {
         return $err;
       };
     }
-    elseif ($type === ESToken::FLAT_STRING_ARRAY) {
+    elseif ($type === ESToken::FLAT_STRING_ARRAY && gettype($value) === 'string') {
       $err = "$b must be a valid FLAT json ARRAY (not map), containing only ascii alpha-num.";
       $json = NULL;
       try {
-        $json = json_decode($value);
+        $json = json_decode($value, JSON_FORCE_OBJECT);
       } catch (Exception $e) {
         return $err;
       }
@@ -411,7 +419,7 @@ class ESToken {
       }
       $i = 0;
       foreach ($json as $index => $item) {
-        if ($i != $index) {
+        if ($i !== $index) {
           return $err;
         }
         $i++;
@@ -420,12 +428,28 @@ class ESToken {
         }
       }
     }
-    elseif ($type === ESToken::FLAT_STRING_MAP) {
+    elseif ($type === ESToken::FLAT_STRING_ARRAY) {
+      $err = "$b must be a valid FLAT json ARRAY (not map), containing only ascii alpha-num.";
+      if (!is_array($value)) {
+        return $err;
+      }
+      $i = 0;
+      foreach ($value as $index => $item) {
+        if ($i !== $index) {
+          return $err;
+        }
+        $i++;
+        if (!ctype_alnum($item)) {
+          return $err;
+        }
+      }
+    }
+    elseif ($type === ESToken::FLAT_STRING_MAP && gettype($value) === 'string') {
       $err = "$b must be a valid FLAT json map (simple string' . 
       ' key (machine-name-like), simple string value), containing only ascii alpha-num.";
       $json = NULL;
       try {
-        $json = json_decode($value);
+        $json = json_decode($value, JSON_FORCE_OBJECT);
       } catch (Exception $e) {
         return $err;
       }
@@ -433,6 +457,19 @@ class ESToken {
         return $err;
       }
       foreach ($json as $index => $item) {
+        if ($err = ESToken::check($index, ESToken::MACHINE_NAME, "$name map key")) {
+          return $err;
+        }
+        if ($err = ESToken::check($item, ESToken::LABEL, "$name map value")) {
+          return $err;
+        }
+      }
+
+    }
+    elseif ($type === ESToken::FLAT_STRING_MAP) {
+      $err = "$b must be a valid FLAT json map (simple string' . 
+      ' key (machine-name-like), simple string value), containing only ascii alpha-num.";
+      foreach ($value as $index => $item) {
         if ($err = ESToken::check($index, ESToken::MACHINE_NAME, "$name map key")) {
           return $err;
         }
@@ -458,6 +495,7 @@ class ESToken {
     }
     return '';
   }
+
 
   static function non_override($name, $value, $desc = NULL) {
     return new ESToken(ESToken::NON_OVERRIDABLE, $name, $value, $desc);
@@ -558,7 +596,7 @@ function _entityspice_drush_presume($msg) {
       if ($answer === FALSE) {
         return FALSE;
       }
-      drush_print_prompt($msg . " (Y/n): ", 0);
+      drush_print_prompt($msg . " ([y]/n): ", 0);
     }
   }
   return FALSE;
@@ -591,8 +629,9 @@ function _entityspice_drush_pre_ekran($machine_name = NULL) {
       continue;
     }
     $already[] = $name;
-    if ($err = $cfg->{$name}->set($arg)->error) {
-      drush_set_error($err);
+    $cfg->{$name}->value = $arg;
+    if (!$cfg->{$name}->is_valid) {
+      drush_set_error($cfg->{$name}->error);
       return FALSE;
     }
   }
@@ -606,15 +645,24 @@ function _entityspice_drush_pre_ekran($machine_name = NULL) {
         continue;
       }
       $desc = $cfg->{$name}->desc;
-      $def = $cfg->{$name}->desc;
+      $def = $cfg->{$name}->value;
+      $def_str = $cfg->{$name} . '';
+      if (is_array($def)) {
+        $def = json_encode($def);
+        $def_str = $def;
+      }
       while (TRUE) {
-        $value = drush_prompt($name . ' (? for help) ', $def, TRUE);
-        if ($value === ' ? ') {
+        $value = drush_prompt($name . ' (? for help) ', $def_str, TRUE);
+        $value = trim($value);
+        if ($value === '?') {
           drush_log($desc . "\n", 'ok');
           continue;
         }
-        if ($err = $cfg->{$name}->set($value)->error) {
-          drush_log($err, 'error');
+        elseif (!empty($value)) {
+          $cfg->{$name}->value = $value;
+        }
+        if (!$cfg->{$name}->is_valid) {
+          drush_log($cfg->{$name}->error, 'error');
         }
         else {
           break;
@@ -781,8 +829,7 @@ function _entityspice_render(ESConfig $a) {
   $files = [];
   foreach ([
              'access.inc',
-             'admin.inc',
-             'bundle.class.inc',
+             'bundle.inc',
              'class.inc',
              'dev.inc',
              'display.inc',

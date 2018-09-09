@@ -67,7 +67,7 @@ class <?php echo $a->uc; ?>EntityMetaDataController extends EntityDefaultMetadat
     $hook = $this->entityType . '_can_delete';
     $ids = [];
     foreach ($this->load($entity_ids) as $entity_id => $entity) {
-      if (!in_array(FALSE, module_invoke_all($hook, $entity, $this->entityType))) {
+      if (!in_array(FALSE, module_invoke_all($hook, $entity, $this->entityType), TRUE)) {
         $ids[] = $entity_id;
       }
     }

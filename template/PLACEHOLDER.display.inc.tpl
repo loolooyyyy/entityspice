@@ -7,7 +7,7 @@
  *   - Defines theme callback for default page.
  *   - Defines theme callback for property field of entity (pseudo fields).
  */
-function <?php echo $a->m; ?>_theme() {
+function _<?php echo $a->m; ?>_theme() {
   $info = [
     '<?php echo $a->m; ?>_entity_add_list' => ['content', 'entity_type'],
     '<?php echo $a->m; ?>_entity_list' => ['header', 'rows', 'entity_type', 'entities'],
